@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Corona Fälle im Kanton Zürich</title>
+    <script src="https://d3js.org/d3.v3.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+    <style>
+    body {
+      font-family: 'Arial', sans-serif;
+    }
+    </style>
+  </head>
+  <body>
+    <h2>Bestätigte Corona-Fälle im Kanton Zürich</h2>
+    <canvas id="chart"></canvas>
+    <footer>
+        Data: Gesundheitsdirektion Kanton Zürich, <a href="https://opendata.swiss/de/dataset/covid_19-fallzahlen-kanton-zuerich">https://opendata.swiss/de/dataset/covid_19-fallzahlen-kanton-zuerich</a>
+    </footer>
+
+    <script>
+    var data;
+
+    d3.csv('https://raw.githubusercontent.com/openZH/covid_19/master/COVID19_Fallzahlen_Kanton_ZH_total.csv', function (error, csvdata) {
+      data = csvdata;
+      makeChart(data);
+    });
+
+    function makeChart(data) {
+      var dateLabels = data.map(function(d) {return d.Date});
+      var cases = data.map(function(d) {return d.TotalConfCases});
+      var chart = new Chart('chart', {
+        type: 'bar',
+        options: {
+          legend: {
+            display: false
+          }
+        },
+        data: {
+          labels: dateLabels,
+          datasets: [
+            {
+              data: cases,
+              backgroundColor: '#F15F36'
+            }
+          ]
+        }
+      });
+    }
+
+    </script>
+  </body>
+</html>

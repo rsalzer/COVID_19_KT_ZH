@@ -7,23 +7,36 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
     <style>
     body {
-      font-family: 'Arial', sans-serif;
+      font-family: 'Helvetica Neue', sans-serif;
     }
     </style>
   </head>
   <body>
-    <h2>Bestätigte Corona-Fälle im Kanton Zürich</h2>
-    <canvas id="chart"></canvas>
-    <footer>
+    <h2>Corona-Fälle im Kanton Zürich</h2>
+    <canvas id="chart" height="100"></canvas>
+    <div>
+      <canvas id="age" width=500 height=350 style="float: left"></canvas>
+      <canvas id="piechart" width=500 height=350 style="float: right;"></canvas>
+    </div>
+    <div>
+    <p style="float: left">
         Data: Gesundheitsdirektion Kanton Zürich, <a href="https://opendata.swiss/de/dataset/covid_19-fallzahlen-kanton-zuerich">https://opendata.swiss/de/dataset/covid_19-fallzahlen-kanton-zuerich</a>
-    </footer>
+    </p>
+    </div>
 
     <script>
-    var data;
+    var allCases;
+    var singleCases;
 
     d3.csv('https://raw.githubusercontent.com/openZH/covid_19/master/COVID19_Fallzahlen_Kanton_ZH_total.csv', function (error, csvdata) {
-      data = csvdata;
-      makeChart(data);
+      allCases = csvdata;
+      makeChart(allCases);
+    });
+
+    d3.csv('https://raw.githubusercontent.com/openZH/covid_19/master/COVID19_Fallzahlen_Kanton_ZH_alter_geschlecht.csv', function (error, csvdata) {
+      singleCases = csvdata;
+      pieChart(singleCases);
+      stackedBarChart(singleCases);
     });
 
     function makeChart(data) {
@@ -32,8 +45,13 @@
       var chart = new Chart('chart', {
         type: 'bar',
         options: {
+          responsive: true,
           legend: {
             display: false
+          },
+          title: {
+            display: true,
+            text: 'Bestätigte Fälle'
           }
         },
         data: {
@@ -46,6 +64,170 @@
           ]
         }
       });
+    }
+
+    function pieChart(data) {
+      var m = 0;
+      var f = 0;
+      var n = 0;
+      for(var i=0; i<data.length; i++) {
+        var singleEntry = data[i];
+        if(singleEntry.NewConfCases=="" && singleEntry.NewPosTests1=="") {
+          console.log("We have a case which is not postested but something else...");
+          console.log(JSON.stringify(singleEntry));
+          continue;
+        }
+        var singleEntryGender = singleEntry.Gender;
+        switch(singleEntryGender) {
+          case "f": f++; break;
+          case "m": m++; break;
+          default: n++; break;
+        }
+      }
+      var lastDate = data[data.length-1].Date;
+      var total = f+m+n;
+      var pieChartLabel = 'Anzahl Fälle nach Geschlecht bis '+lastDate+' (Total: '+total+')';
+      var config = {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [
+                f,
+                m,
+                n
+            ],
+            backgroundColor: [
+              'rgba(255, 80, 80, 1.0)',
+              'rgba(80, 80, 255, 1.0)',
+              '#CCCCCC'
+            ],
+            label: pieChartLabel
+          }],
+          labels: [
+            'Frauen',
+            'Männer',
+            'Ohne Angabe'
+          ]
+        },
+        options: {
+          responsive: false,
+          legend: {
+            display: true
+          },
+          title: {
+						display: true,
+						text: pieChartLabel
+					}
+        }
+        };
+        var chart = new Chart('piechart',config);
+    }
+
+    function stackedBarChart(data) {
+      var u18,u30,u40,u50,u60,u70,u80,u90,ü90,nd;
+      u18=u30=u40=u50=u60=u70=u80=u90=ü90=nd=0;
+      for(var i=0; i<data.length; i++) {
+        var singleEntry = data[i];
+        if(singleEntry.NewConfCases=="" && singleEntry.NewPosTests1=="") {
+          console.log("We have a case which is not postested but something else...");
+          console.log(JSON.stringify(singleEntry));
+          continue;
+        }
+        var singleEntryAge = singleEntry.AgeYear;
+        switch(true) {
+          case (singleEntryAge==""): nd++; break;
+          case (singleEntryAge<=18): u18++; break;
+          case (singleEntryAge<=30): u30++; break;
+          case (singleEntryAge<=40): u40++; break;
+          case (singleEntryAge<=50): u50++; break;
+          case (singleEntryAge<=60): u60++; break;
+          case (singleEntryAge<=70): u70++; break;
+          case (singleEntryAge<=80): u80++; break;
+          case (singleEntryAge<=90): u90++; break;
+          case (singleEntryAge>90): ü90++; break;
+          default: nd++; break;
+        }
+      }
+      var ageData = [
+        u18,
+        u30,
+        u40,
+        u50,
+        u60,
+        u70,
+        u80,
+        u90,
+        ü90,
+        nd
+      ];
+      var lastDate = data[data.length-1].Date;
+      var pieChartLabel = 'Anzahl Fälle nach Alter bis '+lastDate+' (Total: '+data.length+')';
+        var config = {
+          type: 'horizontalBar',
+          data: {
+            datasets: [{
+              data: ageData,
+              backgroundColor: [
+                'rgb(44, 106, 105)',
+                'rgb(54, 147, 129)',
+                'rgb(76, 178, 134)',
+                'rgb(104, 200, 128)',
+                'rgb(134, 212, 117)',
+                'rgb(161, 215, 108)',
+                'rgb(179, 209, 109)',
+                'rgb(184, 193, 127)',
+                'rgb(183, 191, 130)',
+                'rgb(170, 170, 170)'
+              ]
+            }],
+            labels: [
+              '0-18',
+              '19-30',
+              '31-40',
+              '41-50',
+              '51-60',
+              '61-70',
+              '71-80',
+              '81-90',
+              '90+',
+              'Ohne Angabe'
+            ]
+          },
+          options: {
+            responsive: false,
+            legend: {
+              display: false,
+              position: 'left',
+              labels: {
+                generateLabels: function(chart) {
+  const data = chart.data;
+  if (data.labels.length && data.datasets.length) {
+    return data.labels.map((label, i) => {
+      const meta = chart.getDatasetMeta(0);
+      const style = meta.controller.getStyle(i);
+
+      return {
+        text: label+' :'+ageData[i],
+        fillStyle: style.backgroundColor,
+        strokeStyle: style.borderColor,
+        lineWidth: style.borderWidth,
+
+        // Extra data used for toggling the correct item
+        index: i
+      };
+    });
+  }
+  return [];
+}
+              }
+            },
+            title: {
+  						display: true,
+  						text: pieChartLabel
+  					}
+          }
+        };
+        var chart = new Chart('age',config);
     }
 
     </script>

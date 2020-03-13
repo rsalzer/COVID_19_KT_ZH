@@ -15,8 +15,8 @@
     <h2>Corona-Fälle im Kanton Zürich</h2>
     <canvas id="chart" height="100"></canvas>
     <div>
-      <canvas id="age" width=500 height=350 style="float: left"></canvas>
-      <canvas id="piechart" width=500 height=350 style="float: right;"></canvas>
+      <canvas id="age" height="100" style="float: left"></canvas>
+      <canvas id="piechart" height="100" style="float: right;"></canvas>
     </div>
     <div>
     <p style="float: left">
@@ -110,7 +110,7 @@
           ]
         },
         options: {
-          responsive: false,
+          responsive: true,
           legend: {
             display: true
           },
@@ -194,7 +194,7 @@
             ]
           },
           options: {
-            responsive: false,
+            responsive: true,
             legend: {
               display: false,
               position: 'left',

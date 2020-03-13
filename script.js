@@ -155,7 +155,7 @@ function barChartDeadCases(data) {
       datasets: [
         {
           data: cases,
-          backgroundColor: '#aaF0aa'
+          backgroundColor: '#F0aaaa'
         }
       ]
     }

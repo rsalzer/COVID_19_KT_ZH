@@ -9,7 +9,10 @@
   </head>
   <body>
     <h2>Corona-Fälle im Kanton Zürich</h2>
-    <canvas id="confchart" height="100"></canvas>
+    <p>
+      Code auf <a href="https://github.com/rsalzer/COVID_19_KT_ZH">GitHub</a>, Daten: <a href="https://opendata.swiss/de/dataset/covid_19-fallzahlen-kanton-zuerich">Gesundheitsdirektion Kanton Zürich</a>
+    </p>
+    <canvas id="confchart" height="100" style="position: relative; z-index: 2"></canvas>
     <div>
       <canvas id="age" height="100" style="float: left"></canvas>
       <canvas id="piechart" height="100" style="float: right;"></canvas>
@@ -18,11 +21,6 @@
       <canvas id="testedchart" height="500" width="300" style="float: left;"></canvas>
       <canvas id="recoveredchart" height="500" width="300" style="float: left;"></canvas>
       <canvas id="deadchart" height="500" width="300" style="float: left;"></canvas>
-    </div>
-    <div>
-    <p style="float: left">
-        Data: Gesundheitsdirektion Kanton Zürich, <a href="https://opendata.swiss/de/dataset/covid_19-fallzahlen-kanton-zuerich">https://opendata.swiss/de/dataset/covid_19-fallzahlen-kanton-zuerich</a>
-    </p>
     </div>
 
     <script src="script.js"></script>

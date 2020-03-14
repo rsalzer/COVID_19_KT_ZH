@@ -32,7 +32,6 @@ function barChartConfirmedCases(data) {
       plugins: {
         labels: {
           render: function (args) {
-               console.log(args);
                var index = args.index;
                var value = args.value;
                if(index==0) return "";

@@ -82,6 +82,9 @@ function barChartTestedCases(data) {
                     }
                 }
             ]
+        },
+        plugins: {
+          labels: false
         }
     },
     data: {
@@ -120,7 +123,10 @@ function barChartRecoveredCases(data) {
                     }
                 }
             ]
-        }
+      },
+      plugins: {
+        labels: false
+      }
     },
     data: {
       labels: dateLabels,
@@ -164,7 +170,10 @@ function barChartDeadCases(data) {
                     }
                 }
             ]
-        }
+      },
+      plugins: {
+        labels: false
+      }
     },
     data: {
       labels: dateLabels,
@@ -229,6 +238,9 @@ function pieChartGender(data) {
       title: {
         display: true,
         text: pieChartLabel
+      },
+      plugins: {
+        labels: false
       }
     }
     };

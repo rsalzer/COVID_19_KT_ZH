@@ -28,7 +28,24 @@ function barChartConfirmedCases(data) {
       title: {
         display: true,
         text: 'Bestätigte Fälle'
-      }
+      },
+      plugins: {
+        labels: {
+          render: function (args) {
+               console.log(args);
+               var index = args.index;
+               var value = args.value;
+               if(index==0) return "";
+               var lastValue = args.dataset.data[index-1];
+               var percentageChange = value/lastValue - 1;
+               var rounded = Math.round(percentageChange * 100);
+               var label = ""+rounded;
+               if(rounded >= 0) label = "+"+label+"%";
+               else label = "-"+label+"%";
+               return label;
+            }
+          }
+        }
     },
     data: {
       labels: dateLabels,

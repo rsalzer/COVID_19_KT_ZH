@@ -11,8 +11,10 @@
     <meta property="og:image" content="https://rsalzer.github.io/COVID_19_KT_ZH/preview1.png">
     <meta property="og:image" content="https://rsalzer.github.io/COVID_19_KT_ZH/preview2.png">
     <script src="https://d3js.org/d3.v3.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/emn178/chartjs-plugin-labels/src/chartjs-plugin-labels.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.bundle.min.js"></script>
+    <!--script src="https://cdn.jsdelivr.net/gh/emn178/chartjs-plugin-labels/src/chartjs-plugin-labels.js"></script -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@0.7.0"></script>
     <link rel="stylesheet" type="text/css" href="style.css">
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-160625595-1"></script>
@@ -27,6 +29,7 @@
     <h2>Corona-Fälle im Kanton Zürich</h2>
     <p>
       Code auf <a href="https://github.com/rsalzer/COVID_19_KT_ZH">GitHub</a>, Daten: <a href="https://opendata.swiss/de/dataset/covid_19-fallzahlen-kanton-zuerich">Gesundheitsdirektion Kanton Zürich</a><br>
+      <br>Ab dem 9. März gilt ein neues Testregime. Nur noch Personen, die schwere Symptome, ein erhöhtes Komplikationsrisiko, oder in direktem Kontakt mit Patienten oder Bewohnern von Alters- und Pflegeheimen stehen, werden getestet.<br>
       <a href="https://rsalzer.github.io/COVID_19_CH/">Visualisierung für die ganze Schweiz und andere Kantone</a>
     </p>
     <canvas id="confchart" height="100" style="position: relative; z-index: 2"></canvas>

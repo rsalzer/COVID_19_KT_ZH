@@ -16,10 +16,17 @@ d3.csv('https://raw.githubusercontent.com/openZH/covid_19/master/COVID19_Fallzah
 });
 
 function barChartConfirmedCases(data) {
-  var dateLabels = data.map(function(d) {return d.Date});
+  var dateLabels = data.map(function(d) {
+    var dateSplit = d.Date.split(".");
+    var day = parseInt(dateSplit[0]);
+    var month = parseInt(dateSplit[1])-1;
+    var year = parseInt(dateSplit[2]);
+    var date = new Date(year,month,day);
+    return date;
+  });
   var cases = data.map(function(d) {return d.TotalConfCases});
   var chart = new Chart('confchart', {
-    type: 'bar',
+    type: 'line',
     options: {
       responsive: true,
       legend: {
@@ -29,29 +36,53 @@ function barChartConfirmedCases(data) {
         display: true,
         text: 'Bestätigte Fälle'
       },
+      scales: {
+            xAxes: [{
+                type: 'time',
+                time: {
+                    tooltipFormat: 'D.MM.YYYY',
+                    unit: 'day',
+                    displayFormats: {
+                        day: 'D.MM'
+                    }
+                }
+            }]
+        },
       plugins: {
-        labels: {
-          render: function (args) {
-               var index = args.index;
-               var value = args.value;
-               if(index==0) return "";
-               var lastValue = args.dataset.data[index-1];
-               var percentageChange = value/lastValue - 1;
-               var rounded = Math.round(percentageChange * 100);
-               var label = ""+rounded;
-               if(rounded >= 0) label = "+"+label+"%";
-               else label = "-"+label+"%";
-               return label;
-            }
+          datalabels: {
+  						color: 'black',
+  						font: {
+  							weight: 'bold'
+  						},
+  						formatter: function(value, context) {
+                var index = context.dataIndex;
+                if(index==0) return "";
+                var lastValue = context.dataset.data[index-1];
+                /*var percentageChange = value/lastValue - 1;
+                var rounded = Math.round(percentageChange * 100);
+                var label = ""+rounded;
+                if(rounded >= 0) label = "+"+label+"%";
+                else label = "-"+label+"%";
+                */
+                var change = value-lastValue;
+                var label = change>0 ? "+"+change : change;
+                return label;
+              }
+  					}
           }
-        }
     },
     data: {
       labels: dateLabels,
       datasets: [
         {
           data: cases,
-          backgroundColor: '#F15F36'
+          spanGaps: true,
+          borderColor: '#F15F36',
+          backgroundColor: 'rgba(0,0,0,0)',
+          datalabels: {
+						align: 'end',
+						anchor: 'end'
+					}
         }
       ]
     }
@@ -84,7 +115,7 @@ function barChartTestedCases(data) {
             ]
         },
         plugins: {
-          labels: false
+          datalabels: false
         }
     },
     data: {
@@ -125,7 +156,7 @@ function barChartRecoveredCases(data) {
             ]
       },
       plugins: {
-        labels: false
+        datalabels: false
       }
     },
     data: {
@@ -172,7 +203,7 @@ function barChartDeadCases(data) {
             ]
       },
       plugins: {
-        labels: false
+        datalabels: false
       }
     },
     data: {
@@ -240,7 +271,7 @@ function pieChartGender(data) {
         text: pieChartLabel
       },
       plugins: {
-        labels: false
+        datalabels: false
       }
     }
     };
@@ -319,6 +350,9 @@ function barChartAgeGroups(data) {
       },
       options: {
         responsive: true,
+        plugins: {
+          datalabels: false
+        },
         legend: {
           display: false,
           position: 'left',

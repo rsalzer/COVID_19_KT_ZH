@@ -15,6 +15,11 @@ d3.csv('https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_kant
   barChartAgeGroups(singleCases);
 });
 
+d3.json('https://api.github.com/repos/openZH/covid_19/commits?path=fallzahlen_kanton_total_csv/COVID19_Fallzahlen_Kanton_ZH_total.csv&page=1&per_page=1', function(error, data) {
+  var lastUpdateDiv = document.getElementById('latestUpdate');
+  lastUpdateDiv.innerHTML = "<i>Letztes Update der Daten: "+data[0].commit.committer.date.substring(0,10)+" ("+data[0].commit.message+")</i>";
+});
+
 function barChartConfirmedCases(data) {
   var dateLabels = data.map(function(d) {
     var dateSplit = d.date.split("-");

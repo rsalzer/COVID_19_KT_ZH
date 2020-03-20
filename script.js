@@ -1,7 +1,7 @@
 var allCases;
 var singleCases;
 
-d3.csv('https://raw.githubusercontent.com/openZH/covid_19/master/COVID19_Fallzahlen_Kanton_ZH_total.csv', function (error, csvdata) {
+d3.csv('https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_kanton_total_csv/COVID19_Fallzahlen_Kanton_ZH_total.csv', function (error, csvdata) {
   allCases = csvdata;
   barChartConfirmedCases(allCases);
   barChartTestedCases(allCases);
@@ -9,7 +9,7 @@ d3.csv('https://raw.githubusercontent.com/openZH/covid_19/master/COVID19_Fallzah
   barChartDeadCases(allCases);
 });
 
-d3.csv('https://raw.githubusercontent.com/openZH/covid_19/master/COVID19_Fallzahlen_Kanton_ZH_alter_geschlecht.csv', function (error, csvdata) {
+d3.csv('https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_kanton_alter_geschlecht_csv/COVID19_Fallzahlen_Kanton_ZH_alter_geschlecht.csv', function (error, csvdata) {
   singleCases = csvdata;
   pieChartGender(singleCases);
   barChartAgeGroups(singleCases);
@@ -17,14 +17,14 @@ d3.csv('https://raw.githubusercontent.com/openZH/covid_19/master/COVID19_Fallzah
 
 function barChartConfirmedCases(data) {
   var dateLabels = data.map(function(d) {
-    var dateSplit = d.Date.split(".");
-    var day = parseInt(dateSplit[0]);
+    var dateSplit = d.date.split("-");
+    var day = parseInt(dateSplit[2]);
     var month = parseInt(dateSplit[1])-1;
-    var year = parseInt(dateSplit[2]);
+    var year = parseInt(dateSplit[0]);
     var date = new Date(year,month,day);
     return date;
   });
-  var cases = data.map(function(d) {return d.TotalConfCases});
+  var cases = data.map(function(d) {return d.ncumul_conf});
   var chart = new Chart('confchart', {
     type: 'line',
     options: {
@@ -90,8 +90,8 @@ function barChartConfirmedCases(data) {
 }
 
 function barChartTestedCases(data) {
-  var dateLabels = data.filter(function(d) { if(d.TotalTestedCases) return d}).map(function(d) {return d.Date});
-  var cases = data.filter(function(d) { if(d.TotalTestedCases) return d}).map(function(d) {return d.TotalTestedCases});
+  var dateLabels = data.filter(function(d) { if(d.ncumul_tested) return d}).map(function(d) {return d.date});
+  var cases = data.filter(function(d) { if(d.ncumul_tested) return d}).map(function(d) {return d.ncumul_tested});
   var chart = new Chart('testedchart', {
     type: 'bar',
     options: {
@@ -131,7 +131,7 @@ function barChartTestedCases(data) {
 }
 
 function barChartRecoveredCases(data) {
-  var dateLabels = data.filter(function(d) { if(d.TotalCured) return d}).map(function(d) {return d.Date});
+  var dateLabels = data.filter(function(d) { if(d.TotalCured) return d}).map(function(d) {return d.date});
   var cases = data.filter(function(d) { if(d.TotalCured) return d}).map(function(d) {return d.TotalCured});
   var chart = new Chart('recoveredchart', {
     type: 'bar',
@@ -172,8 +172,8 @@ function barChartRecoveredCases(data) {
 }
 
 function barChartDeadCases(data) {
-  var dateLabels = data.filter(function(d) { if(d.TotalDeaths) return d}).map(function(d) {return d.Date});
-  var cases = data.filter(function(d) { if(d.TotalDeaths) return d}).map(function(d) {return d.TotalDeaths});
+  var dateLabels = data.filter(function(d) { if(d.ncumul_deceased) return d}).map(function(d) {return d.date});
+  var cases = data.filter(function(d) { if(d.ncumul_deceased) return d}).map(function(d) {return d.ncumul_deceased});
   if(dateLabels.length==0) {
     dateLabels = ["Bisher"];
     cases = [0];

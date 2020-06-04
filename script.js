@@ -21,7 +21,7 @@ d3.json('https://api.github.com/repos/openZH/covid_19/commits?path=fallzahlen_ka
 });
 
 function barChartConfirmedCases(data) {
-  var dateLabels = data.map(function(d) {
+    var dateLabels = data.map(function(d) {
     var dateSplit = d.date.split("-");
     var day = parseInt(dateSplit[2]);
     var month = parseInt(dateSplit[1])-1;

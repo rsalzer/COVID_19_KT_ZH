@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+<script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
+</head>
+<body>
+<!-- Create an element where the map will take place -->
+<h2>Neue Covid-Fälle im Kanton Zürich nach Bezirk</h2>
+<svg id="my_dataviz" width="600" height="600"></svg>
+<h3 id="maptext">Woche 22</h3>
+<input type="range" value="22" min="9" max="22" onchange="weekChanged(this.value)" oninput="weekChanged(this.value)"></input>
+</body>
+
+<script>
+
+// The svg
+var svg = d3.select("svg"),//.style("background-color", 'red'),
+    width = +svg.attr("width"),
+    height = +svg.attr("height");
+
+var smaller = width<height ? width : height;
+// Map and projection
+var projection = d3.geoMercator()
+    .center([8.675, 47.43])                // GPS of location to zoom on
+    .scale(40000*(smaller/600))                       // This is like the zoom
+    .translate([ width/2, height/2 ])
+
+// Load external data and boot
+//d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson", function(data){
+var topodata, data;
+d3.queue()
+  .defer(d3.json, "bezirke.json")
+  .defer(d3.csv, "https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_bezirke/fallzahlen_kanton_ZH_bezirk.csv")
+  .await(ready);
+
+function ready(error, topo, csvdata) {
+    // Filter data
+    //data.features = data.features.filter(function(d){console.log(d.properties.name) ; return d.properties.name=="Switzerland"})
+    data = csvdata;
+    topodata = topo;
+    weekChanged(22);
+}
+
+var week = 22;
+
+function draw() {
+    svg.selectAll("*").remove();
+
+    const path = d3.geoPath().projection(projection);
+    // Draw the map
+  svg.append("g")
+      .selectAll("path")
+      .data(topodata.features)
+      .enter()
+      .append("path")
+      .attr("fill", "grey")
+      .attr("d", path)
+      .style("stroke", "white")
+      .on("mouseover", mouseOverHandler)
+      .on("mouseout", mouseOutHandler)
+      .on("click", clickHandler);
+
+  svg.append("g")
+    .selectAll("text")
+    .data(topodata.features)
+    .enter()
+    .append("text")
+    .attr("transform", d => `translate(${path.centroid(d)})`)
+    .attr("text-anchor", "middle")
+    .attr("font-size", 15)
+    .attr("dy", 15)
+    .attr("dx", -5)
+    .text(function(d) {
+      var id = d.properties.BEZ_ID;
+      var filtered = data.filter(function(d) { if(d.DistrictId==id && d.Week==week) return d});
+      var lastFiltered = filtered[filtered.length-1];
+      return `${lastFiltered.NewConfCases}`;
+      //return `<tspan x='0' dy='1.2em'>Woche ${lastFiltered.Week}:</tspan><tspan x='0' dy='1.2em'>${d.properties.NAME}: ${lastFiltered.NewConfCases}</tspan>`;
+    });
+};
+
+function mouseOverHandler(d, i) {
+  d3.select(this).attr("fill", "green")
+}
+
+function mouseOutHandler(d, i) {
+  d3.select(this).attr("fill", "grey")
+}
+
+function clickHandler(d, i) {
+  //d3.select("#maptext").text(`${d.properties.BEZ_ID}: ${d.properties.NAME}`)
+}
+
+function weekChanged(whichWeek) {
+  week = whichWeek;
+  var dateOfWeek = getDateOfISOWeek(week, 2020);
+  var endDay = new Date(dateOfWeek);
+  endDay.setDate(endDay.getDate()+6);
+  d3.select("#maptext").text(`Woche ${week}: ${formatDate(dateOfWeek)} - ${formatDate(endDay)}`)
+  draw();
+}
+
+function formatDate(date) {
+  var dd = date.getDate();
+  var mm = date.getMonth()+1;
+  if(dd<10) dd='0'+dd;
+  if(mm<10) mm='0'+mm;
+  return dd+"."+mm+"."
+}
+
+function getDateOfISOWeek(w, y) {
+    var simple = new Date(y, 0, 1 + (w - 1) * 7);
+    var dow = simple.getDay();
+    var ISOweekStart = simple;
+    if (dow <= 4)
+        ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+    else
+        ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+    return ISOweekStart;
+}
+
+</script>
+
+</html>

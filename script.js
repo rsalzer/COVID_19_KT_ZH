@@ -68,8 +68,10 @@ function getCantonZH() {
 function getBezirke() {
   var url = 'https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_bezirke/fallzahlen_kanton_ZH_bezirk.csv';
   d3.csv(url, function(error, csvdata) {
-    chartBezirke(csvdata);
-    chartBezirkeDeaths(csvdata)
+    chartBezirke(csvdata, true);
+    chartBezirkeDeaths(csvdata, true);
+    chartBezirke(csvdata, false);
+    chartBezirkeDeaths(csvdata, false);
   });
 }
 
@@ -247,14 +249,19 @@ addAxisButtons(canvas, chart);
 
 }
 
-function chartBezirke(data) {
+function chartBezirke(data, absolute) {
   var place = "bezirke";
+  if(!absolute) place += "relativ";
   var section = document.getElementById("detail");
   var article = document.createElement("article");
   article.id="detail_"+place;
   var h3 = document.createElement("h3");
   //h3.className = "flag "+place;
-  var text = document.createTextNode("Fallzahlen Bezirke");
+  if(absolute) {
+    var text = document.createTextNode("Absolute Fallzahlen Bezirke");
+  } else {
+    var text = document.createTextNode("Relative Fallzahlen Bezirke");
+  }
   h3.appendChild(text);
   var a = document.createElement("a");
   a.href = "#top";
@@ -277,7 +284,12 @@ function chartBezirke(data) {
   for(var i=101; i<=112; i++) {
     var filtered = data.filter(function(d) { if(d.DistrictId==i) return d});
     labels = filtered.map(function(d) {return d.Week});
-    var cases = filtered.map(function(d) {return d.TotalConfCases});
+    if(absolute) {
+      var cases = filtered.map(function(d) {return d.TotalConfCases});
+    }
+    else {
+      var cases = filtered.map(function(d) {return Math.round(d.TotalConfCases / d.Population * 10000 *1000) / 1000});
+    }
     datasets.push({
       label: names[i],
       data: cases,
@@ -308,7 +320,7 @@ function chartBezirke(data) {
       },
       title: {
         display: true,
-        text: 'Bestätigte Fälle nach Bezirk'
+        text: (absolute ? 'Bestätigte Fälle nach Bezirk' : "Bestätigte Fälle nach Bezirk pro 10'000 Einwohner")
       },
       tooltips: {
         mode: 'index',
@@ -330,8 +342,9 @@ function chartBezirke(data) {
                 changeStr = " ("+label+")";
                 if(Number.isNaN(change)) changeStr = "";
             }
-            var tabbing = 4-value.length;
+            var tabbing = 6-value.length;
             var padding = " ".repeat(tabbing);
+            if(!absolute) changeStr = "";
             return title+titlepadding+value+padding+changeStr;
           }
         }
@@ -350,8 +363,9 @@ function chartBezirke(data) {
   addAxisButtons(canvas, chart);
 }
 
-function chartBezirkeDeaths(data) {
+function chartBezirkeDeaths(data, absolute) {
   var place = "bezirke";
+  if(!absolute) place += "relativ";
   var div = document.getElementById("container_"+place);
   var canvas = document.createElement("canvas");
   canvas.id = place+"deaths";
@@ -363,7 +377,12 @@ function chartBezirkeDeaths(data) {
   for(var i=101; i<=112; i++) {
     var filtered = data.filter(function(d) { if(d.DistrictId==i) return d});
     labels = filtered.map(function(d) {return d.Week});
-    var cases = filtered.map(function(d) {return d.TotalDeaths});
+    if(absolute) {
+      var cases = filtered.map(function(d) {return d.TotalDeaths});
+    }
+    else {
+      var cases = filtered.map(function(d) {return Math.round(d.TotalDeaths / d.Population * 10000 *1000) / 1000});
+    }
     datasets.push({
       label: names[i],
       data: cases,
@@ -394,7 +413,7 @@ function chartBezirkeDeaths(data) {
       },
       title: {
         display: true,
-        text: 'Todesfälle nach Bezirk'
+        text: (absolute ? "Todesfälle nach Bezirk" : "Todesfälle nach Bezirk pro 10'000 Einwohner")
       },
       tooltips: {
         mode: 'index',
@@ -416,8 +435,9 @@ function chartBezirkeDeaths(data) {
                 changeStr = " ("+label+")";
                 if(Number.isNaN(change)) changeStr = "";
             }
-            var tabbing = 4-value.length;
+            var tabbing = 5-value.length;
             var padding = " ".repeat(tabbing);
+            if(!absolute) changeStr = "";
             return title+titlepadding+value+padding+changeStr;
           }
         }
@@ -739,7 +759,7 @@ function getWeekScales() {
       position: 'right',
       ticks: {
         beginAtZero: true,
-        suggestedMax: 10,
+        suggestedMax: 4,
       },
       gridLines: {
           color: inDarkMode() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'

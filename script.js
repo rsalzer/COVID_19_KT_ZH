@@ -370,8 +370,8 @@ function chartBezirkeDeaths(data) {
       fill: false,
       cubicInterpolationMode: 'monotone',
       spanGaps: true,
-      borderColor: colors[i],
-      backgroundColor: colors[i],
+      borderColor: colors2[i-101],
+      backgroundColor: colors2[i-101],
       datalabels: {
         align: 'end',
         anchor: 'end'

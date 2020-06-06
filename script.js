@@ -66,6 +66,7 @@ function getBezirke() {
   var url = 'https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_bezirke/fallzahlen_kanton_ZH_bezirk.csv';
   d3.csv(url, function(error, csvdata) {
     chartBezirke(csvdata);
+    chartBezirkeDeaths(csvdata)
   });
 }
 
@@ -304,7 +305,93 @@ function chartBezirke(data) {
       },
       title: {
         display: true,
-        text: 'Fälle nach Bezirk'
+        text: 'Bestätigte Fälle nach Bezirk'
+      },
+      tooltips: {
+        mode: 'index',
+        intersect: false,
+        bodyFontFamily: 'IBM Plex Mono',
+        itemSort: (a, b, data) => b.yLabel - a.yLabel,
+        callbacks: {
+          label: function(tooltipItems, data) {
+            var value = tooltipItems.value;
+            var index = tooltipItems.index;
+            var datasetIndex = tooltipItems.datasetIndex;
+            var changeStr = "";
+            var title = data.datasets[datasetIndex].label+": ";
+            var titletabbing = 19-title.length;
+            var titlepadding = " ".repeat(titletabbing);
+            if(index>0) {
+                var change = parseInt(value)-parseInt(data.datasets[datasetIndex].data[index-1]);
+                var label = change>0 ? "+"+change : change;
+                changeStr = " ("+label+")";
+                if(Number.isNaN(change)) changeStr = "";
+            }
+            var tabbing = 4-value.length;
+            var padding = " ".repeat(tabbing);
+            return title+titlepadding+value+padding+changeStr;
+          }
+        }
+      },
+      scales: getWeekScales(),
+      plugins: {
+        datalabels: false
+      }
+    },
+    data: {
+      labels: labels,
+      datasets: datasets
+    }
+  });
+
+  addAxisButtons(canvas, chart);
+}
+
+function chartBezirkeDeaths(data) {
+  var place = "bezirke";
+  var div = document.getElementById("container_"+place);
+  var canvas = document.createElement("canvas");
+  canvas.id = place+"deaths";
+  canvas.height=400;
+  div.appendChild(canvas);
+  div.scrollLeft = 1700;
+  var datasets = [];
+  var labels;
+  for(var i=101; i<=112; i++) {
+    var filtered = data.filter(function(d) { if(d.DistrictId==i) return d});
+    labels = filtered.map(function(d) {return d.Week});
+    var cases = filtered.map(function(d) {return d.TotalDeaths});
+    datasets.push({
+      label: names[i],
+      data: cases,
+      fill: false,
+      cubicInterpolationMode: 'monotone',
+      spanGaps: true,
+      borderColor: colors[i],
+      backgroundColor: colors[i],
+      datalabels: {
+        align: 'end',
+        anchor: 'end'
+      }
+    });
+  }
+
+  var chart = new Chart(canvas.id, {
+    type: 'line',
+    options: {
+      responsive: false,
+      layout: {
+          padding: {
+              right: 20
+          }
+      },
+      legend: {
+        display: true,
+        position: 'bottom'
+      },
+      title: {
+        display: true,
+        text: 'Todesfälle nach Bezirk'
       },
       tooltips: {
         mode: 'index',

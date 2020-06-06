@@ -47,11 +47,12 @@ function ready(error, topo, csvdata) {
 }
 
 var week = 22;
+const path = d3.geoPath().projection(projection);
 
 function draw() {
     svg.selectAll("*").remove();
 
-    const path = d3.geoPath().projection(projection);
+
     // Draw the map
   svg.append("g")
       .selectAll("path")

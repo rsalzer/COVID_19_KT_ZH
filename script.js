@@ -780,7 +780,7 @@ function getScales() {
 
 function getDataLabels() {
   //return false;
-  if(getDeviceState()==2) return false;
+  //if(getDeviceState()==2) return false;
   return {
       color: inDarkMode() ? '#ccc' : 'black',
       font: {

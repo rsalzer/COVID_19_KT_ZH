@@ -283,7 +283,15 @@ function chartBezirke(data, absolute) {
   var labels;
   for(var i=101; i<=112; i++) {
     var filtered = data.filter(function(d) { if(d.DistrictId==i) return d});
-    labels = filtered.map(function(d) {return d.Week});
+    if(i==101) {
+      labels = filtered.map(function(d) {
+        var week = d.Week;
+        var dateOfWeek = getDateOfISOWeek(week, 2020);
+        var endDay = new Date(dateOfWeek);
+        endDay.setDate(endDay.getDate()+6);
+        return /*`Woche ${week}:*/ `${formatDate(dateOfWeek)} - ${formatDate(endDay)}`;
+      });
+    }
     if(absolute) {
       var cases = filtered.map(function(d) {return d.TotalConfCases});
     }
@@ -376,7 +384,15 @@ function chartBezirkeDeaths(data, absolute) {
   var labels;
   for(var i=101; i<=112; i++) {
     var filtered = data.filter(function(d) { if(d.DistrictId==i) return d});
-    labels = filtered.map(function(d) {return d.Week});
+    if(i==101) {
+      labels = filtered.map(function(d) {
+        var week = d.Week;
+        var dateOfWeek = getDateOfISOWeek(week, 2020);
+        var endDay = new Date(dateOfWeek);
+        endDay.setDate(endDay.getDate()+6);
+        return /*`Woche ${week}:*/ `${formatDate(dateOfWeek)} - ${formatDate(endDay)}`;
+      });
+    }
     if(absolute) {
       var cases = filtered.map(function(d) {return d.TotalDeaths});
     }
@@ -743,12 +759,11 @@ function getWeekScales() {
         displayFormats: {
           day: 'DD.MM'
         }
-      },
+      },*/
       ticks: {
-        min: new Date("2020-02-24T23:00:00"),
-        max: new Date(),
+        minRotation: 45
       },
-      */
+
       gridLines: {
           color: inDarkMode() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
       }
@@ -937,4 +952,23 @@ function inDarkMode() {
     return true;
   }
   return false;
+}
+
+function formatDate(date) {
+  var dd = date.getDate();
+  var mm = date.getMonth()+1;
+  if(dd<10) dd='0'+dd;
+  if(mm<10) mm='0'+mm;
+  return dd+"."+mm+"."
+}
+
+function getDateOfISOWeek(w, y) {
+    var simple = new Date(y, 0, 1 + (w - 1) * 7);
+    var dow = simple.getDay();
+    var ISOweekStart = simple;
+    if (dow <= 4)
+        ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+    else
+        ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+    return ISOweekStart;
 }

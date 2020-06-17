@@ -106,8 +106,10 @@ function barChartZH(data) {
   var canvas = document.getElementById("zh");
   div.scrollLeft = 1700;
   var cases = moreFilteredData.map(function(d) {return d.ncumul_conf});
+  var diff = [0];
+  for (var i = 1; i < cases.length; i++) diff.push(cases[i] - cases[i - 1]);
   var chart = new Chart('zh', {
-    type: 'line',
+    type: 'bar',
     options: {
       layout: {
           padding: {
@@ -128,8 +130,8 @@ function barChartZH(data) {
         bodyFontFamily: 'IBM Plex Mono',
         callbacks: {
           label: function(tooltipItems, data) {
-            var value = tooltipItems.value;
             var index = tooltipItems.index;
+            var value = cases[index];
             var changeStr = "";
             if(index>0) {
                 var change = parseInt(value)-parseInt(cases[index-1]);
@@ -142,14 +144,19 @@ function barChartZH(data) {
       },
       scales: getScales(),
       plugins: {
-        datalabels: getDataLabels()
+        datalabels: {
+          color: inDarkMode() ? '#ccc' : 'black',
+          font: {
+            weight: 'bold'
+          }
+        }
       }
   },
   data: {
     labels: dateLabels,
     datasets: [
       {
-        data: cases,
+        data: diff,
         fill: false,
         cubicInterpolationMode: 'monotone',
         spanGaps: true,
@@ -187,8 +194,10 @@ function barChartZHDeaths(data) {
   canvas.height=250;
   div.appendChild(canvas);
   var cases = moreFilteredData.map(function(d) {return d.ncumul_deceased});
+  var diff = [0];
+  for (var i = 1; i < cases.length; i++) diff.push(cases[i] - cases[i - 1]);
   var chart = new Chart(canvas.id, {
-    type: 'line',
+    type: 'bar',
     options: {
       layout: {
           padding: {
@@ -209,8 +218,8 @@ function barChartZHDeaths(data) {
         bodyFontFamily: 'IBM Plex Mono',
         callbacks: {
           label: function(tooltipItems, data) {
-            var value = tooltipItems.value;
             var index = tooltipItems.index;
+            var value = cases[index];
             var changeStr = "";
             if(index>0) {
                 var change = parseInt(value)-parseInt(cases[index-1]);
@@ -223,14 +232,19 @@ function barChartZHDeaths(data) {
       },
       scales: getScales(),
       plugins: {
-        datalabels: getDataLabels()
+        datalabels: {
+          color: inDarkMode() ? '#ccc' : 'black',
+          font: {
+            weight: 'bold'
+          }
+        }
       }
   },
   data: {
     labels: dateLabels,
     datasets: [
       {
-        data: cases,
+        data: diff,
         fill: false,
         cubicInterpolationMode: 'monotone',
         spanGaps: true,

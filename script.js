@@ -45,7 +45,6 @@ var verbose = false;
 var actualData = [];
 var actualDeaths = [];
 var actualHospitalisation = [];
-var data = [];
 Chart.defaults.global.defaultFontFamily = "IBM Plex Sans";
 document.getElementById("loaded").style.display = 'none';
 
@@ -67,12 +66,116 @@ function getCantonZH() {
 
 function getBezirke() {
   var url = 'https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_bezirke/fallzahlen_kanton_ZH_bezirk.csv';
-  d3.csv(url, function(error, csvdata) {
-    chartBezirke(csvdata, true);
-    chartBezirkeDeaths(csvdata, true);
-    chartBezirke(csvdata, false);
-    chartBezirkeDeaths(csvdata, false);
-  });
+  d3.queue()
+    .defer(d3.json, "bezirke.json")
+    .defer(d3.csv, "https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_bezirke/fallzahlen_kanton_ZH_bezirk.csv")
+    .await(function(error, topo, csvdata) {
+      draw(csvdata, topo);
+      lastBezirksData(csvdata);
+      chartBezirke(csvdata, true);
+      chartBezirkeDeaths(csvdata, true);
+      chartBezirke(csvdata, false);
+      chartBezirkeDeaths(csvdata, false);
+    });
+}
+
+function lastBezirksData(data) {
+  var table = document.getElementById("confirmed_1");
+  for(var i=101; i<=112; i++) {
+    var filtered = data.filter(function(d) { if(d.DistrictId==i) return d});
+    var last = filtered[filtered.length-1];
+
+    if(i==101) {
+      var week = last.Week;
+      var dateOfWeek = getDateOfISOWeek(week, 2020);
+      var endDay = new Date(dateOfWeek);
+      endDay.setDate(endDay.getDate()+6);
+      var text = `Aktueller Stand Bezirke (${formatDate(dateOfWeek)} - ${formatDate(endDay)})`;
+      var lastTitle = document.getElementById("lastTitle");
+      lastTitle.innerHTML = text;
+    }
+
+    var tr = document.createElement("tr");
+    tr.id = i;
+    var td = document.createElement("td");
+    var text = document.createTextNode(names[i]);
+    td.appendChild(text);
+    tr.appendChild(td);
+
+    td = document.createElement("td");
+    text = document.createTextNode(last.TotalConfCases);
+    td.appendChild(text);
+    tr.appendChild(td);
+
+    td = document.createElement("td");
+    text = document.createTextNode(last.NewConfCases);
+    td.appendChild(text);
+    tr.appendChild(td);
+
+    table.appendChild(tr);
+  }
+}
+
+function draw(csvdata,topodata) {
+  var svg = d3.select("svg"),//.style("background-color", 'red'),
+      width = +svg.attr("width"),
+      height = +svg.attr("height");
+    svg.selectAll("*").remove();
+  var smaller = width<height ? width : height;
+  const projection = d3.geoMercator()
+      .center([8.675, 47.43])                // GPS of location to zoom on
+      .scale(40000*(smaller/600))                       // This is like the zoom
+      .translate([ width/2, height/2 ])
+  const path = d3.geoPath().projection(projection);
+
+    // Draw the map
+  svg.append("g")
+      .selectAll("path")
+      .data(topodata.features)
+      .enter()
+      .append("path")
+      .attr("fill", "grey")
+      .attr("d", path)
+      .style("stroke", "white")
+      .on("mouseover", mouseOverHandler)
+      .on("mouseout", mouseOutHandler);
+      // .on("click", clickHandler);
+
+  // svg.append("g")
+  //   .selectAll("text")
+  //   .data(topodata.features)
+  //   .enter()
+  //   .append("text")
+  //   .attr("transform", d => `translate(${path.centroid(d)})`)
+  //   .attr("text-anchor", "middle")
+  //   .attr("font-size", 15)
+  //   .attr("dy", 15)
+  //   .attr("dx", -5)
+  //   .text(function(d) {
+  //     var id = d.properties.BEZ_ID;
+  //     var filtered = data.filter(function(d) { if(d.DistrictId==id && d.Week==week) return d});
+  //     var lastFiltered = filtered[filtered.length-1];
+  //     return `${lastFiltered.NewConfCases}`;
+  //     //return `<tspan x='0' dy='1.2em'>Woche ${lastFiltered.Week}:</tspan><tspan x='0' dy='1.2em'>${d.properties.NAME}: ${lastFiltered.NewConfCases}</tspan>`;
+  //   });
+};
+
+var oldSelected = null;
+function clickHandler(d, i) {
+
+}
+
+function mouseOverHandler(d, i) {
+  d3.select(this).attr("fill", "#5592ED");
+  // if(oldSelected!=null)
+  //   document.getElementById(oldSelected).className = "";
+  document.getElementById(d.properties.BEZ_ID).className = "active";
+  oldSelected = d.properties.BEZ_ID;
+}
+
+function mouseOutHandler(d, i) {
+  d3.select(this).attr("fill", "grey");
+  document.getElementById(d.properties.BEZ_ID).className = "";
 }
 
 Chart.Tooltip.positioners.custom = function(elements, eventPosition) { //<-- custom is now the new option for the tooltip position

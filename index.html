@@ -12,7 +12,9 @@
     <meta property="og:url" content="https://rsalzer.github.io/COVID_19_KT_ZH/">
     <meta property="og:description" content="Visualisierung der Corona-Fälle in der Schweiz, basierend auf den Daten des Statistischen Amts des Kanton Zürichs.">
     <meta property="og:image" content="https://rsalzer.github.io/COVID_19_KT_ZH/preview.png">
-    <script src="js/d3.v3.js"></script>
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+    <script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
     <script src="js/Chart.bundle.min.js"></script>
     <script src="js/chartjs-plugin-datalabels.min.js"></script>
     <link rel="stylesheet" type="text/css" href="style.css">
@@ -62,14 +64,37 @@
 			</header>
       <div id="loadingspinner">Lade Daten...<br/><div class="lds-ring"><div></div><div></div><div></div><div></div></div></div>
       <div id="loaded"></div>
-      <article id="detail_ZH">
-      <h3 class="flag ZH">Ganzer Kanton Zürich</h3>
-        <div class="canvas-dummy" id="container_ZH">
-          <canvas id="zh" height="300">
+        <article>
+          <h3 id="lastTitle"></h3>
+      <div>
+          <svg id="my_dataviz" width="300" height="300"></svg>
+          <table></table>
+          <table>
+						<thead>
+							<tr>
+								<th>Bezirk</th>
+								<th>Gesamtfälle</th>
+                <th>Neue Fälle</th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody id="confirmed_1">
+              <!--tr>
+								<td><a class="flag flag-icon-ch flag-icon-squared" href="#detail_SO">SO</a></td>
+								<td>2020-03-26</td>
+								<td>141</td>
+								<td><a href="https://corona.so.ch/">↗</a></td>
+							</tr -->
+            </tbody>
+          </table>
         </div>
-      </article>
-
-
+        </article>
+        <article id="detail_ZH">
+        <h3 class="flag ZH">Ganzer Kanton Zürich</h3>
+          <div class="canvas-dummy" id="container_ZH">
+            <canvas id="zh" height="300">
+          </div>
+        </article>
     </section>
     <section id="detail">
       <header>

@@ -144,11 +144,13 @@ table tr th:nth-child(2) {
 	text-align: left;
 	white-space: nowrap;
 }
+/*
 table tr td:nth-child(2) {
 	opacity: 0.5;
 }
-table tr th:nth-child(3),
-table tr td:nth-child(3) {
+*/
+table tr th:nth-child(2),
+table tr td:nth-child(2) {
 	text-align: right;
 }
 .table-group {
@@ -254,6 +256,9 @@ table.wide th:nth-child(2) span {
 	position: static;
 	transform: none;
 	padding-left: 0;
+}
+tr.active {
+  background-color: #5592ED;
 }
 h3 {
 	margin-bottom: 1em;

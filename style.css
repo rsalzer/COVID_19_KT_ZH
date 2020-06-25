@@ -111,6 +111,15 @@ section > * > article:last-child {
 	display: inline-table;
 	margin-right: 2em;
 }
+.svg-group {
+  display: inline-table;
+}
+#confirmed {
+  float: right;
+}
+svg {
+
+}
 table {
 	font-family: "IBM Plex Mono", monospace;
 	font-size: 14px;
@@ -197,6 +206,17 @@ table img {
 		width: 100%;
 		margin-right: 0px;
 	}
+  .svg-group {
+    text-align: center;
+  }
+  .svg-group table {
+    display: table;
+    width: 100%;
+    margin-right: 0px;
+  }
+  svg {
+
+  }
 	.table-group table:nth-child(1) tbody > tr:last-child td {
 		border-bottom: 0;
 	}

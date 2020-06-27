@@ -52,6 +52,7 @@ document.getElementById("loaded").style.display = 'none';
 
 getCantonZH();
 getBezirke();
+getAge();
 
 function getCantonZH() {
   var url = 'https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_kanton_total_csv_v2/COVID19_Fallzahlen_Kanton_ZH_total.csv';
@@ -77,6 +78,271 @@ function getBezirke() {
       chartBezirke(csvdata, false);
       chartBezirkeDeaths(csvdata, false);
     });
+}
+
+
+var ageMax = 0;
+function getAge() {
+  var url = 'https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_kanton_alter_geschlecht_csv/COVID19_Fallzahlen_Kanton_ZH_alter_geschlecht.csv';
+  var ages = [];
+  for(var i=1; i<=120; i++) {
+    ages.push(i);
+  }
+  d3.csv(url, function(error, csvdata) {
+      parseAgeRange(csvdata, ages, 7);
+      parseAge(csvdata, ages);
+  });
+}
+
+
+
+function parseAgeRange(csvdata, ages, range) {
+  var allDates = csvdata.map(d => d.Date);
+  let unique = allDates.filter((item, i, ar) => ar.indexOf(item) === i);
+  let last7 = unique.slice(unique.length-range);
+
+  var firstRowDate = last7[0];
+  var dateSplit = firstRowDate.split("-");
+  var day = parseInt(dateSplit[2]);
+  var month = parseInt(dateSplit[1]);
+  var year = parseInt(dateSplit[0]);
+  var firstDateString = day+"."+month+"."+year;
+
+  var latestRowDate = last7[last7.length-1];
+  dateSplit = latestRowDate.split("-");
+  day = parseInt(dateSplit[2]);
+  month = parseInt(dateSplit[1]);
+  year = parseInt(dateSplit[0]);
+  var secondDateString = day+"."+month+"."+year;
+  var title = document.getElementById("agetitle_range");
+  title.innerHTML = title.innerHTML + " ("+firstDateString+" - "+secondDateString+")";
+
+  var latestData = csvdata.filter(function(d) { if(d.NewDeaths == "0" && last7.includes(d.Date)) return d});
+  console.log(latestData);
+  const sex = ["F", "M"];
+  const names = ["Weiblich", "Männlich"];
+  const colors = ["red", "blue"];
+  var datasets = [];
+  ageMax = 0;
+  var ageMin = 200;
+  var total = 0;
+  var totalCases = 0;
+  for(var i in sex) {
+    var singleSex = sex[i];
+    var filteredForSex = latestData.filter(function(d) { if(d.Gender == singleSex) return d });
+    console.log(filteredForSex);
+    var arr = new Array(121).fill(null);
+    for(var j=0; j<filteredForSex.length; j++) {
+      var singleCase = filteredForSex[j];
+      var age = parseInt(singleCase.AgeYear);
+      if(age>ageMax) ageMax = age;
+      if(age<ageMin) ageMin = age;
+      var cases = parseInt(singleCase.NewConfCases);
+      arr[age-1] = arr[age-1]+cases;
+      total += (cases * age);
+      totalCases += cases
+    }
+    datasets.push({
+      label: names[i],
+      data: arr,
+      borderColor: colors[i],
+      backgroundColor: colors[i]
+    });
+  }
+  // console.log("Total (7 days): "+total);
+  // console.log("Total Nr of Cases: "+totalCases);
+  // console.log("Average: "+(total/totalCases));
+  var average = Math.round(total/totalCases*10)/10;
+  var p = document.getElementById("weekagenotes");
+  p.innerHTML = p.innerHTML + average;
+
+  var chart = new Chart('agecanvasweek', {
+    type: 'bar',
+    options: {
+      layout: {
+          padding: {
+              right: 20
+          }
+      },
+      responsive: false,
+      legend: {
+        display: false
+      },
+      title: {
+        display: false,
+        text: 'Bestätigte Fälle'
+      },
+      tooltips: {
+        mode: 'x',
+        intersect: false,
+        bodyFontFamily: 'IBM Plex Mono',
+        callbacks: {
+          label: function(tooltipItem, data) {
+            if(tooltipItem.value == "NaN") return null;
+            else return data.datasets[tooltipItem.datasetIndex].label+": "+tooltipItem.value;
+          },
+          title: function(tooltipItem, data) {
+              return tooltipItem[0].label+ " Jahre";
+          }
+        }
+      },
+      scales: {
+        xAxes: [{
+            stacked: true,
+            ticks: {
+              min: 0,//(Math.floor(ageMin/10))*10,
+              max: (Math.ceil(ageMax/10))*10,
+              autoSkip: false,
+              stepSize: 10,
+              callback: function(value, index, values) {
+                    return value%10==0?value:null;
+              }
+            },
+            gridLines: {
+                color: inDarkMode() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                offsetGridLines: false
+            }
+        }],
+        yAxes: [{
+            stacked: true,
+            ticks: {
+              beginAtZero: true,
+              suggestedMax: 1,
+              stepSize: 1,
+            },
+            gridLines: {
+                color: inDarkMode() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
+            }
+        }],
+      },
+      plugins: {
+        datalabels: false
+      }
+  },
+  data: {
+    labels: ages,
+    datasets: datasets
+  }
+});
+}
+
+
+function parseAge(csvdata, ages) {
+  var allDates = csvdata.map(d => d.Date);
+  var latestRowDate = csvdata[csvdata.length-1].Date;
+  var dateSplit = latestRowDate.split("-");
+  var day = parseInt(dateSplit[2]);
+  var month = parseInt(dateSplit[1]);
+  var year = parseInt(dateSplit[0]);
+  var title = document.getElementById("agetitle");
+  title.innerHTML = title.innerHTML + " " + day+"."+month+"."+year;
+  var latestData = csvdata.filter(function(d) { if(d.Date==latestRowDate && d.NewDeaths == "0") return d});
+  console.log(latestData);
+  const sex = ["F", "M"];
+  const names = ["Weiblich", "Männlich"];
+  const colors = ["red", "blue"];
+  var datasets = [];
+  var ageMin = 200;
+  var total = 0;
+  var totalCases = 0;
+  for(var i in sex) {
+    var singleSex = sex[i];
+    var filteredForSex = latestData.filter(function(d) { if(d.Gender == singleSex) return d });
+    console.log(filteredForSex);
+    var arr = new Array(121).fill(null);
+    for(var j=0; j<filteredForSex.length; j++) {
+      var singleCase = filteredForSex[j];
+      var age = parseInt(singleCase.AgeYear);
+      if(age>ageMax) ageMax = age;
+      if(age<ageMin) ageMin = age;
+      var cases = parseInt(singleCase.NewConfCases);
+      arr[age-1] = arr[age-1]+cases;
+      total += (cases * age);
+      totalCases += cases
+    }
+    datasets.push({
+      label: names[i],
+      data: arr,
+      borderColor: colors[i],
+      backgroundColor: colors[i]
+    });
+  }
+  // console.log("Total: "+total);
+  // console.log("Total Nr of Cases: "+totalCases);
+  // console.log("Average: "+(total/totalCases));
+  var average = Math.round(total/totalCases*10)/10;
+  var p = document.getElementById("agenotes");
+  p.innerHTML = p.innerHTML + average;
+
+
+  var chart = new Chart('agecanvas', {
+    type: 'bar',
+    options: {
+      layout: {
+          padding: {
+              right: 20
+          }
+      },
+      responsive: false,
+      legend: {
+        display: false
+      },
+      title: {
+        display: false,
+        text: 'Bestätigte Fälle'
+      },
+      tooltips: {
+        mode: 'x',
+        intersect: false,
+        bodyFontFamily: 'IBM Plex Mono',
+        callbacks: {
+          label: function(tooltipItem, data) {
+            if(tooltipItem.value == "NaN") return null;
+            else return data.datasets[tooltipItem.datasetIndex].label+": "+tooltipItem.value;
+          },
+          title: function(tooltipItem, data) {
+              return tooltipItem[0].label+ " Jahre";
+          }
+        }
+      },
+      scales: {
+        xAxes: [{
+            stacked: true,
+            ticks: {
+              min: 0,//(Math.floor(ageMin/10))*10,
+              max: (Math.ceil(ageMax/10))*10,
+              autoSkip: false,
+              stepSize: 10,
+              callback: function(value, index, values) {
+                    return value%10==0?value:null;
+              }
+            },
+            gridLines: {
+                color: inDarkMode() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                offsetGridLines: false
+            }
+        }],
+        yAxes: [{
+            stacked: true,
+            ticks: {
+              beginAtZero: true,
+              suggestedMax: 1,
+              stepSize: 1,
+            },
+            gridLines: {
+                color: inDarkMode() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
+            }
+        }],
+      },
+      plugins: {
+        datalabels: false
+      }
+  },
+  data: {
+    labels: ages,
+    datasets: datasets
+  }
+});
 }
 
 function lastBezirksData(data) {
@@ -205,9 +471,9 @@ function barChartZH(data) {
     var date = new Date(year,month,day);
     return date;
   });
-  var div = document.getElementById("container_ZH");
+  var div = document.getElementById("overview_zh");
   var canvas = document.getElementById("zh");
-  div.scrollLeft = 1700;
+  div.scrollLeft = 2300;
   var cases = moreFilteredData.map(function(d) {return d.ncumul_conf});
   var diff = [0];
   for (var i = 1; i < cases.length; i++) diff.push(cases[i] - cases[i - 1]);
@@ -296,6 +562,7 @@ function barChartZHDeaths(data) {
   canvas.id = "death"+place;
   canvas.height=250;
   div.appendChild(canvas);
+  div.scrollLeft = 2300;
   var cases = moreFilteredData.map(function(d) {return d.ncumul_deceased});
   var diff = [0];
   for (var i = 1; i < cases.length; i++) diff.push(cases[i] - cases[i - 1]);
@@ -496,7 +763,7 @@ function chartBezirkeDeaths(data, absolute) {
   canvas.id = place+"deaths";
   canvas.height=400;
   div.appendChild(canvas);
-  div.scrollLeft = 1700;
+  div.scrollLeft = 2300;
   var datasets = [];
   var labels;
   for(var i=101; i<=112; i++) {
@@ -623,7 +890,7 @@ function barChartCases(place) {
   }
   article.appendChild(div);
   section.appendChild(article);
-  div.scrollLeft = 1700;
+  div.scrollLeft = 2300;
   if(!filteredData || filteredData.length<2) return;
   var moreFilteredData = filteredData.filter(function(d) { if(d.ncumul_conf!="") return d});
   var dateLabels = moreFilteredData.map(function(d) {
@@ -701,22 +968,14 @@ function barChartHospitalisations(place, data) {
   var filteredData = data.filter(function(d) { if(d.abbreviation_canton_and_fl==place) return d});
   var hospitalFiltered = filteredData.filter(function(d) { if(d.current_hosp!="") return d});
   if(hospitalFiltered.length==0) return;
-  var div = document.getElementById("container_"+place);
+  var div = document.getElementById("container_hosp");
   var canvas = document.createElement("canvas");
+
   //canvas.className  = "myClass";
-  if(filteredData.length==1) {
-    var text = filteredData[0].date+": "+filteredData[0].current_hosp+" hospitalisiert";
-    if(filteredData[0].current_icu!="") text+=" , "+filteredData[0].current_icu+" in Intensivbehandlung";
-    if(filteredData[0].current_vent!="") text+=" , "+filteredData[0].current_vent+" künstlich beatmet";
-    div.appendChild(document.createElement("br"));
-    div.appendChild(document.createTextNode(text));
-  }
-  else {
-    canvas.id = "hosp"+place;
-    canvas.height=250;
-    div.appendChild(canvas);
-    //canvas.width=350+filteredData.length*40;
-  }
+  canvas.id = "hosp"+place;
+  canvas.height=250;
+  div.appendChild(canvas);
+  div.scrollLeft = 1900;
   if(!filteredData || filteredData.length<2) return;
   var moreFilteredData = filteredData; //.filter(function(d) { if(d.ncumul_conf!="") return d});
   var dateLabels = moreFilteredData.map(function(d) {

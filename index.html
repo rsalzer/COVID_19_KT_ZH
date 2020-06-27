@@ -64,6 +64,12 @@
 			</header>
       <div id="loadingspinner">Lade Daten...<br/><div class="lds-ring"><div></div><div></div><div></div><div></div></div></div>
       <div id="loaded"></div>
+      <article id="detail_ZH">
+      <h3 class="flag ZH">Fälle ganzer Kanton</h3>
+        <div class="canvas-dummy zh" id="overview_zh">
+          <canvas id="zh" height="300"></canvas>
+        </div>
+      </article>
         <article>
           <h3 id="lastTitle"></h3>
       <div class="svg-group">
@@ -88,10 +94,28 @@
           </table>
         </div>
         </article>
-        <article id="detail_ZH">
-        <h3 class="flag ZH">Ganzer Kanton Zürich</h3>
-          <div class="canvas-dummy" id="container_ZH">
-            <canvas id="zh" height="300">
+        <article id="age">
+          <h3 class="flag ZH" id="agetitle">Altersverteilung der Fälle vom </h3>
+          <div class="canvas-dummy" id="container_age">
+            <canvas class="age" id="agecanvas" height="150"></canvas>
+          </div>
+          <div class="notes">
+            <p id="agenotes">Ø-Alter: </p>
+    			</div>
+          <h3 class="flag ZH" id="agetitle_range">Altersverteilung der Fälle </h3>
+          <div class="canvas-dummy" id="container_age">
+            <canvas id="agecanvasweek" class="age" height="150"></canvas>
+          </div>
+          <div class="notes">
+            <p id="weekagenotes">Ø-Alter: </p>
+          </div>
+        </article>
+        <article id="overview_zh">
+          <h3 class="flag ZH">Todesfälle ganzer Kanton</h3>
+          <div class="canvas-dummy zh" id="container_ZH">
+          </div>
+          <h3 class="flag ZH">Hospitalisierungen/Isolationen/Quarantäne ganzer Kanton</h3>
+          <div class="canvas-dummy zh" id="container_hosp">
           </div>
         </article>
     </section>

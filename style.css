@@ -304,7 +304,7 @@ canvas {
   width: 100%;
 	/* min-width: 1800px; */
 }
-#container_ZH canvas {
+.zh canvas {
   min-width: 2500px;
 }
 button {
@@ -316,7 +316,7 @@ button {
 	width: 100%
     clear: both;
 }
-#container_ZH .chartButtons {
+.zh .chartButtons {
   min-width: 2500px;
 }
 
@@ -325,6 +325,9 @@ button {
 	  width: 100%;
 		min-width: 600px;
 	}
+  .age {
+    min-width: 0px;
+  }
 	.chartButtons {
 		overflow-x: scroll;
 		min-width: 600px;

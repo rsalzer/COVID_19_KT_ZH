@@ -370,8 +370,11 @@ function lastBezirksData(data) {
     var tr = document.createElement("tr");
     tr.id = i;
     var td = document.createElement("td");
+    var span = document.createElement("span");
+    span.className = "flag _"+i;
     var text = document.createTextNode(names[i]);
-    td.appendChild(text);
+    span.appendChild(text);
+    td.appendChild(span);
     tr.appendChild(td);
 
     td = document.createElement("td");

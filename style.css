@@ -426,6 +426,18 @@ button {
 	padding-left: 1.75em;
 }
 .flag.ZH { background-image: url(flags/zh.png); }
+.flag._101 { background-image: url(flags/101.png); }
+.flag._102 { background-image: url(flags/102.png); }
+.flag._103 { background-image: url(flags/103.png); }
+.flag._104 { background-image: url(flags/104.png); }
+.flag._105 { background-image: url(flags/105.png); }
+.flag._106 { background-image: url(flags/106.png); }
+.flag._107 { background-image: url(flags/107.png); }
+.flag._108 { background-image: url(flags/108.png); }
+.flag._109 { background-image: url(flags/109.png); }
+.flag._110 { background-image: url(flags/110.png); }
+.flag._111 { background-image: url(flags/111.png); }
+.flag._112 { background-image: url(flags/112.png); }
 @media (prefers-color-scheme: dark) {
 	.flag.ZH { background-image: url(flags/zh-dark.png); }
 }

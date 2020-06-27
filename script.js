@@ -156,6 +156,12 @@ function parseAgeRange(csvdata, ages, range) {
   var p = document.getElementById("weekagenotes");
   p.innerHTML = p.innerHTML + average;
 
+  if(getDeviceState()==2) {
+    var div = document.getElementById("agecanvasweek");
+    div.scrollLeft = 250;
+    div = document.getElementById("agecanvas");
+    div.scrollLeft = 250;
+  }
   var chart = new Chart('agecanvasweek', {
     type: 'bar',
     options: {

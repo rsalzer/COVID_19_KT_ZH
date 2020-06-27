@@ -118,7 +118,7 @@ function parseAgeRange(csvdata, ages, range) {
   title.innerHTML = title.innerHTML + " ("+firstDateString+" - "+secondDateString+")";
 
   var latestData = csvdata.filter(function(d) { if(d.NewDeaths == "0" && last7.includes(d.Date)) return d});
-  console.log(latestData);
+  // console.log(latestData);
   const sex = ["F", "M"];
   const names = ["Weiblich", "Männlich"];
   const colors = ["red", "blue"];
@@ -130,7 +130,7 @@ function parseAgeRange(csvdata, ages, range) {
   for(var i in sex) {
     var singleSex = sex[i];
     var filteredForSex = latestData.filter(function(d) { if(d.Gender == singleSex) return d });
-    console.log(filteredForSex);
+    // console.log(filteredForSex);
     var arr = new Array(121).fill(null);
     for(var j=0; j<filteredForSex.length; j++) {
       var singleCase = filteredForSex[j];
@@ -237,7 +237,7 @@ function parseAge(csvdata, ages) {
   var title = document.getElementById("agetitle");
   title.innerHTML = title.innerHTML + " " + day+"."+month+"."+year;
   var latestData = csvdata.filter(function(d) { if(d.Date==latestRowDate && d.NewDeaths == "0") return d});
-  console.log(latestData);
+  // console.log(latestData);
   const sex = ["F", "M"];
   const names = ["Weiblich", "Männlich"];
   const colors = ["red", "blue"];
@@ -248,7 +248,7 @@ function parseAge(csvdata, ages) {
   for(var i in sex) {
     var singleSex = sex[i];
     var filteredForSex = latestData.filter(function(d) { if(d.Gender == singleSex) return d });
-    console.log(filteredForSex);
+    // console.log(filteredForSex);
     var arr = new Array(121).fill(null);
     for(var j=0; j<filteredForSex.length; j++) {
       var singleCase = filteredForSex[j];

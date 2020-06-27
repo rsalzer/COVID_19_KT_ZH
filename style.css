@@ -284,6 +284,11 @@ h3 {
 	margin-bottom: 1em;
 	font-size: 1.125rem;
 }
+h4 {
+  margin-top: 1em;
+	margin-bottom: 1em;
+	font-size: 0.875rem;
+}
 #last .group {
 	display: flex;
 	flex-wrap: wrap;
@@ -326,7 +331,7 @@ button {
 		min-width: 600px;
 	}
   .age {
-    min-width: 0px;
+    min-width: 500px;
   }
 	.chartButtons {
 		overflow-x: scroll;

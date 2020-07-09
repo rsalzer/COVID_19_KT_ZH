@@ -72,15 +72,14 @@
       </article>
         <article>
           <h3 id="lastTitle"></h3>
-      <div class="svg-group">
-          <svg id="my_dataviz" width="350" height="350"></svg>
+          <div class="svg-group">
+          <svg id="bezirkssvg" width="350" height="350"></svg>
           <table id="confirmed">
 						<thead>
 							<tr>
 								<th>Bezirk</th>
 								<th>Gesamtfälle</th>
                 <th>Neue Fälle</th>
-								<th></th>
 							</tr>
 						</thead>
 						<tbody id="confirmed_1">
@@ -92,6 +91,26 @@
 							</tr -->
             </tbody>
           </table>
+        </div>
+        </article>
+        <article>
+          <h3 id="lastPLZTitle">Neue Fälle nach PLZ über die letzten 7 Tage</h3>
+          <div class="svg-group">
+          <svg id="plzsvg" width="350" height="350"></svg>
+          <div class="tableFixHead">
+          <table id="plztable" class="tableFixHead">
+            <thead>
+              <tr>
+                <th>Ort</th>
+                <th>Bewohner</th>
+                <th>Neue Fälle</th>
+              </tr>
+            </thead>
+            <tbody id="plzbody">
+
+            </tbody>
+          </table>
+        </div>
         </div>
         </article>
         <article id="age">

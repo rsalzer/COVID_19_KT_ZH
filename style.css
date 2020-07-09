@@ -114,7 +114,7 @@ section > * > article:last-child {
 .svg-group {
   display: inline-table;
 }
-#confirmed {
+#confirmed, #plztable {
   float: right;
 }
 svg {
@@ -125,6 +125,8 @@ table {
 	font-size: 14px;
 	border-collapse: collapse;
 }
+.tableFixHead          { overflow-y: auto; height: 350px; float: right; }
+.tableFixHead thead th { position: sticky; top: 0; }
 table td,
 table th {
 	text-align: right;

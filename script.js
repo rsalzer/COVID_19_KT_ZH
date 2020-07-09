@@ -52,6 +52,7 @@ document.getElementById("loaded").style.display = 'none';
 
 getCantonZH();
 getBezirke();
+getPLZ();
 getAge();
 
 function getCantonZH() {
@@ -69,14 +70,28 @@ function getBezirke() {
   var url = 'https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_bezirke/fallzahlen_kanton_ZH_bezirk.csv';
   d3.queue()
     .defer(d3.json, "bezirke.json")
-    .defer(d3.csv, "https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_bezirke/fallzahlen_kanton_ZH_bezirk.csv")
+    .defer(d3.csv, url)
     .await(function(error, topo, csvdata) {
-      draw(csvdata, topo);
+      drawBezirke(csvdata, topo);
       lastBezirksData(csvdata);
       chartBezirke(csvdata, true);
       chartBezirkeDeaths(csvdata, true);
       chartBezirke(csvdata, false);
       chartBezirkeDeaths(csvdata, false);
+    });
+}
+
+var plzdata = null;
+var plzgeojson = null;
+function getPLZ() {
+  var url = 'https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_plz/fallzahlen_kanton_ZH_plz.csv';
+  d3.queue()
+    .defer(d3.json, "plz.geojson")
+    .defer(d3.csv, url)
+    .await(function(error, topo, csvdata) {
+      plzdata = csvdata;
+      plzgeojson = topo;
+      drawPLZ(csvdata, topo);
     });
 }
 
@@ -118,6 +133,15 @@ function parseAgeRange(csvdata, ages, range) {
   title.innerHTML = title.innerHTML + " ("+firstDateString+" - "+secondDateString+")";
 
   var latestData = csvdata.filter(function(d) { if(d.NewDeaths == "0" && last7.includes(d.Date)) return d});
+  var median = "";
+  if(latestData.length%2==0) {
+    var upperMedian = parseInt(latestData[latestData.length/2].AgeYear);
+    var lowerMedian = parseInt(latestData[latestData.length/2-1].AgeYear);
+    var median = Math.round((upperMedian+lowerMedian)*10/2)/10;
+  }
+  else {
+    var median = latestData[Math.floor(latestData.length/2)].AgeYear;
+  }
   // console.log(latestData);
   const sex = ["F", "M"];
   const names = ["Weiblich", "Männlich"];
@@ -154,7 +178,7 @@ function parseAgeRange(csvdata, ages, range) {
   // console.log("Average: "+(total/totalCases));
   var average = Math.round(total/totalCases*10)/10;
   var p = document.getElementById("weekagenotes");
-  p.innerHTML = p.innerHTML + average;
+  p.innerHTML = p.innerHTML + average+" ; Median: "+median;
 
   if(getDeviceState()==2) {
     var div = document.getElementById("agecanvasweek");
@@ -244,6 +268,15 @@ function parseAge(csvdata, ages) {
   title.innerHTML = title.innerHTML + " " + day+"."+month+"."+year;
   var latestData = csvdata.filter(function(d) { if(d.Date==latestRowDate && d.NewDeaths == "0") return d});
   // console.log(latestData);
+  var median = "";
+  if(latestData.length%2==0) {
+    var upperMedian = parseInt(latestData[latestData.length/2].AgeYear);
+    var lowerMedian = parseInt(latestData[latestData.length/2-1].AgeYear);
+    var median = Math.round((upperMedian+lowerMedian)*10/2)/10;
+  }
+  else {
+    var median = latestData[Math.floor(latestData.length/2)].AgeYear;
+  }
   const sex = ["F", "M"];
   const names = ["Weiblich", "Männlich"];
   const colors = ["red", "blue"];
@@ -278,7 +311,7 @@ function parseAge(csvdata, ages) {
   // console.log("Average: "+(total/totalCases));
   var average = Math.round(total/totalCases*10)/10;
   var p = document.getElementById("agenotes");
-  p.innerHTML = p.innerHTML + average;
+  p.innerHTML = p.innerHTML + average+" ; Median: "+median;
 
 
   var chart = new Chart('agecanvas', {
@@ -391,8 +424,8 @@ function lastBezirksData(data) {
   }
 }
 
-function draw(csvdata,topodata) {
-  var svg = d3.select("svg"),//.style("background-color", 'red'),
+function drawBezirke(csvdata,topodata) {
+  var svg = d3.select("#bezirkssvg"),//.style("background-color", 'red'),
       width = +svg.attr("width"),
       height = +svg.attr("height");
     svg.selectAll("*").remove();
@@ -414,36 +447,10 @@ function draw(csvdata,topodata) {
       .style("stroke", "white")
       .on("mouseover", mouseOverHandler)
       .on("mouseout", mouseOutHandler);
-      // .on("click", clickHandler);
-
-  // svg.append("g")
-  //   .selectAll("text")
-  //   .data(topodata.features)
-  //   .enter()
-  //   .append("text")
-  //   .attr("transform", d => `translate(${path.centroid(d)})`)
-  //   .attr("text-anchor", "middle")
-  //   .attr("font-size", 15)
-  //   .attr("dy", 15)
-  //   .attr("dx", -5)
-  //   .text(function(d) {
-  //     var id = d.properties.BEZ_ID;
-  //     var filtered = data.filter(function(d) { if(d.DistrictId==id && d.Week==week) return d});
-  //     var lastFiltered = filtered[filtered.length-1];
-  //     return `${lastFiltered.NewConfCases}`;
-  //     //return `<tspan x='0' dy='1.2em'>Woche ${lastFiltered.Week}:</tspan><tspan x='0' dy='1.2em'>${d.properties.NAME}: ${lastFiltered.NewConfCases}</tspan>`;
-  //   });
 };
-
-var oldSelected = null;
-function clickHandler(d, i) {
-
-}
 
 function mouseOverHandler(d, i) {
   d3.select(this).attr("fill", "#5592ED");
-  // if(oldSelected!=null)
-  //   document.getElementById(oldSelected).className = "";
   document.getElementById(d.properties.BEZ_ID).className = "active";
   oldSelected = d.properties.BEZ_ID;
 }
@@ -451,6 +458,66 @@ function mouseOverHandler(d, i) {
 function mouseOutHandler(d, i) {
   d3.select(this).attr("fill", "grey");
   document.getElementById(d.properties.BEZ_ID).className = "";
+}
+
+function drawPLZ(csvdata,topodata) {
+  var svg = d3.select("#plzsvg"),//.style("background-color", 'red'),
+      width = +svg.attr("width"),
+      height = +svg.attr("height");
+    svg.selectAll("*").remove();
+  var smaller = width<height ? width : height;
+  const projection = d3.geoMercator()
+      .center([8.675, 47.43])                // GPS of location to zoom on
+      .scale(40000*(smaller/600))                       // This is like the zoom
+      .translate([ width/2, height/2 ])
+  const path = d3.geoPath().projection(projection);
+
+    // Draw the map
+  svg.append("g")
+      .selectAll("path")
+      .data(topodata.features)
+      .enter()
+      .append("path")
+      .attr("fill", "grey")
+      .attr("d", path)
+      .style("stroke", "white")
+      .on("mouseover", mouseOverHandlerPLZ)
+      .on("mouseout", mouseOutHandlerPLZ);
+
+    drawPLZTable();
+};
+
+function mouseOverHandlerPLZ(d, i) {
+  d3.select(this).attr("fill", "#5592ED");
+  var tr = document.getElementById("plz"+d.properties.postleitzahl);
+  tr.className = "active";
+  tr.scrollIntoView({
+    behavior: 'smooth',
+    block: 'center'
+  });
+}
+
+function mouseOutHandlerPLZ(d, i) {
+  d3.select(this).attr("fill", "grey");
+  document.getElementById("plz"+d.properties.postleitzahl).className = "";
+}
+
+function drawPLZTable() {
+  var tbody = document.getElementById("plzbody");
+  for(var i=0; i<plzdata.length; i++) {
+    var singlePLZ = plzdata[i];
+    var plz = ""+singlePLZ.PLZ;
+    var name = plzNames[plz];
+    if(name==undefined) name = "";
+    var cases = '';
+    var population = '';
+    cases = `${singlePLZ.NewConfCases_7days}`;
+    population = singlePLZ.Population.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "’");;
+    var tr = document.createElement("tr");
+    tr.id = "plz"+plz;
+    tr.innerHTML = "<td>"+plz+" "+name+"</td><td>"+population+"</td><td>"+cases+"</td>";
+    tbody.append(tr);
+  }
 }
 
 Chart.Tooltip.positioners.custom = function(elements, eventPosition) { //<-- custom is now the new option for the tooltip position
@@ -1357,3 +1424,257 @@ function getDateOfISOWeek(w, y) {
         ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
     return ISOweekStart;
 }
+
+var plzNames = {
+8001: "Zürich",
+8002: "Zürich",
+8003: "Zürich",
+8004: "Zürich",
+8005: "Zürich",
+8006: "Zürich",
+8008: "Zürich",
+8032: "Zürich",
+8037: "Zürich",
+8038: "Zürich",
+8041: "Zürich",
+8044: "Gockhausen",
+8045: "Zürich",
+8046: "Zürich",
+8047: "Zürich",
+8048: "Zürich",
+8049: "Zürich",
+8050: "Zürich",
+8051: "Zürich",
+8052: "Zürich",
+8053: "Zürich",
+8055: "Zürich",
+8057: "Zürich",
+8064: "Zürich",
+8102: "Oberengstringen",
+8103: "Unterengstringen",
+8104: "Weiningen ZH",
+8105: "Regensdorf",
+8106: "Adlikon b. Regensdorf",
+8107: "Buchs ZH",
+8108: "Dällikon",
+8112: "Otelfingen",
+8113: "Boppelsen",
+8114: "Dänikon ZH",
+8115: "Hüttikon",
+8117: "Fällanden",
+8118: "Pfaffhausen",
+8121: "Benglen",
+8122: "Binz",
+8123: "Ebmatingen",
+8124: "Maur",
+8125: "Zollikerberg",
+8126: "Zumikon",
+8127: "Forch",
+8132: "Hinteregg",
+8133: "Esslingen",
+8134: "Adliswil",
+8135: "Sihlwald",
+8136: "Gattikon",
+8142: "Uitikon Waldegg",
+8143: "Stallikon",
+8152: "Glattbrugg",
+8153: "Rümlang",
+8154: "Oberglatt ZH",
+8155: "Nassenwil",
+8156: "Oberhasli",
+8157: "Dielsdorf",
+8158: "Regensberg",
+8162: "Sünikon",
+8164: "Bachs",
+8165: "Schleinikon",
+8166: "Niederweningen",
+8172: "Niederglatt ZH",
+8173: "Neerach",
+8174: "Stadel b. Niederglatt",
+8175: "Windlach",
+8180: "Bülach",
+8181: "Höri",
+8182: "Hochfelden",
+8184: "Bachenbülach",
+8185: "Winkel",
+8187: "Weiach",
+8192: "Zweidlen",
+8193: "Eglisau",
+8194: "Hüntwangen",
+8195: "Wasterkingen",
+8196: "Wil ZH",
+8197: "Rafz",
+8212: "Nohl",
+8245: "Feuerthalen",
+8246: "Langwiesen",
+8247: "Flurlingen",
+8248: "Uhwiesen",
+8302: "Kloten",
+8303: "Bassersdorf",
+8304: "Wallisellen",
+8305: "Dietlikon",
+8306: "Brüttisellen",
+8307: "Effretikon",
+8308: "Illnau",
+8309: "Nürensdorf",
+8310: "Grafstal",
+8311: "Brütten",
+8312: "Winterberg ZH",
+8314: "Kyburg",
+8315: "Lindau",
+8317: "Tagelswangen",
+8320: "Fehraltorf",
+8322: "Madetswil",
+8330: "Pfäffikon ZH",
+8331: "Auslikon",
+8332: "Rumlikon",
+8335: "Hittnau",
+8340: "Hinwil",
+8342: "Wernetshausen",
+8344: "Bäretswil",
+8345: "Adetswil",
+8352: "Ricketwil (Winterthur)",
+8353: "Elgg",
+8354: "Hofstetten ZH",
+8400: "Winterthur",
+8404: "Reutlingen (Winterthur)",
+8405: "Winterthur",
+8406: "Winterthur",
+8408: "Winterthur",
+8409: "Winterthur",
+8412: "Aesch (Neftenbach)",
+8413: "Neftenbach",
+8414: "Buch am Irchel",
+8415: "Berg am Irchel",
+8416: "Flaach",
+8418: "Schlatt ZH",
+8421: "Dättlikon",
+8422: "Pfungen",
+8424: "Embrach",
+8425: "Oberembrach",
+8426: "Lufingen",
+8427: "Rorbas",
+8428: "Teufen ZH",
+8442: "Hettlingen",
+8444: "Henggart",
+8447: "Dachsen",
+8450: "Andelfingen",
+8451: "Kleinandelfingen",
+8452: "Adlikon b. Andelfingen",
+8453: "Alten",
+8457: "Humlikon",
+8458: "Dorf",
+8459: "Volken",
+8460: "Marthalen",
+8461: "Oerlingen",
+8462: "Rheinau",
+8463: "Benken ZH",
+8464: "Ellikon am Rhein",
+8465: "Wildensbuch",
+8466: "Trüllikon",
+8467: "Truttikon",
+8468: "Guntalingen",
+8471: "Bänk (Dägerlen)",
+8472: "Seuzach",
+8474: "Dinhard",
+8475: "Ossingen",
+8476: "Unterstammheim",
+8477: "Oberstammheim",
+8478: "Thalheim an der Thur",
+8479: "Altikon",
+8482: "Sennhof (Winterthur)",
+8483: "Kollbrunn",
+8484: "Neschwil",
+8486: "Rikon im Tösstal",
+8487: "Zell ZH",
+8488: "Turbenthal",
+8489: "Ehrikon",
+8492: "Wila",
+8493: "Saland",
+8494: "Bauma",
+8495: "Schmidrüti",
+8496: "Steg im Tösstal",
+8497: "Fischenthal",
+8498: "Gibswil",
+8499: "Sternenberg",
+8523: "Hagenbuch ZH",
+8542: "Wiesendangen",
+8543: "Kefikon ZH",
+8544: "Attikon",
+8545: "Rickenbach ZH",
+8546: "Menzengrüt",
+8548: "Ellikon an der Thur",
+8600: "Dübendorf",
+8602: "Wangen b. Dübendorf",
+8603: "Schwerzenbach",
+8604: "Volketswil",
+8605: "Gutenswil",
+8606: "Nänikon",
+8607: "Aathal-Seegräben",
+8608: "Bubikon",
+8610: "Uster",
+8614: "Bertschikon (Gossau ZH)",
+8615: "Freudwil",
+8616: "Riedikon",
+8617: "Mönchaltorf",
+8618: "Oetwil am See",
+8620: "Wetzikon ZH",
+8623: "Wetzikon ZH",
+8624: "Grüt (Gossau ZH)",
+8625: "Gossau ZH",
+8626: "Ottikon (Gossau ZH)",
+8627: "Grüningen",
+8630: "Rüti ZH",
+8632: "Tann",
+8633: "Wolfhausen",
+8634: "Hombrechtikon",
+8635: "Dürnten",
+8636: "Wald ZH",
+8637: "Laupen ZH",
+8700: "Küsnacht ZH",
+8702: "Zollikon",
+8703: "Erlenbach ZH",
+8704: "Herrliberg",
+8706: "Meilen",
+8707: "Uetikon am See",
+8708: "Männedorf",
+8712: "Stäfa",
+8713: "Uerikon",
+8714: "Feldbach",
+8800: "Thalwil",
+8802: "Kilchberg ZH",
+8803: "Rüschlikon",
+8804: "Au ZH",
+8805: "Richterswil",
+8810: "Horgen",
+8815: "Horgenberg",
+8816: "Hirzel",
+8820: "Wädenswil",
+8824: "Schönenberg ZH",
+8825: "Hütten",
+8833: "Samstagern",
+8902: "Urdorf",
+8903: "Birmensdorf ZH",
+8904: "Aesch ZH",
+8906: "Bonstetten",
+8907: "Wettswil",
+8908: "Hedingen",
+8909: "Zwillikon",
+8910: "Affoltern am Albis",
+8911: "Rifferswil",
+8912: "Obfelden",
+8913: "Ottenbach",
+8914: "Aeugst am Albis",
+8915: "Hausen am Albis",
+8925: "Ebertswil",
+8926: "Kappel am Albis",
+8932: "Mettmenstetten",
+8933: "Maschwanden",
+8934: "Knonau",
+8942: "Oberrieden",
+8951: "Fahrweid",
+8952: "Schlieren",
+8953: "Dietikon",
+8954: "Geroldswil",
+8955: "Oetwil an der Limmat"
+};

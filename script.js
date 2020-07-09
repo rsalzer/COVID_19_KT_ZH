@@ -1554,6 +1554,7 @@ var plzNames = {
 8353: "Elgg",
 8354: "Hofstetten ZH",
 8400: "Winterthur",
+8403: "Winterthur",
 8404: "Reutlingen (Winterthur)",
 8405: "Winterthur",
 8406: "Winterthur",

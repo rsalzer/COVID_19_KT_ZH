@@ -490,11 +490,9 @@ function drawPLZ(csvdata,topodata) {
 function mouseOverHandlerPLZ(d, i) {
   d3.select(this).attr("fill", "#5592ED");
   var tr = document.getElementById("plz"+d.properties.postleitzahl);
+  var div = document.getElementById("scrolldiv");
   tr.className = "active";
-  tr.scrollIntoView({
-    behavior: 'smooth',
-    block: 'center'
-  });
+  div.scrollTop = tr.offsetTop-175;
 }
 
 function mouseOutHandlerPLZ(d, i) {

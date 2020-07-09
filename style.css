@@ -125,8 +125,15 @@ table {
 	font-size: 14px;
 	border-collapse: collapse;
 }
-.tableFixHead          { overflow-y: auto; height: 350px; float: right; }
-.tableFixHead thead th { position: sticky; top: 0; }
+.tableFixHead          { overflow-y: auto; height: 354px; float: right; background-color: black;}
+.tableFixHead thead th { position: sticky; top: 0; background-color: black; margin-top: 5px;}
+.tableFixHead,
+.tableFixHead td {
+  box-shadow: inset 1px -1px #000;
+}
+.tableFixHead th {
+  box-shadow: inset 1px 1px #000, 0 1px #000;
+}
 table td,
 table th {
 	text-align: right;

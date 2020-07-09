@@ -478,9 +478,14 @@ function drawPLZ(csvdata,topodata) {
       .data(topodata.features)
       .enter()
       .append("path")
-      .attr("fill", "grey")
       .attr("d", path)
       .style("stroke", "white")
+      .attr('fill', function(d,i) {
+            var plz = ""+d.properties.postleitzahl;
+            var filtered = csvdata.filter(function(d) { if(d.PLZ==plz) return d});
+            if(filtered.length>0 && filtered[filtered.length-1].NewConfCases_7days != "0-3") return "green";
+            return "grey";
+        })
       .on("mouseover", mouseOverHandlerPLZ)
       .on("mouseout", mouseOutHandlerPLZ);
 
@@ -496,14 +501,28 @@ function mouseOverHandlerPLZ(d, i) {
 }
 
 function mouseOutHandlerPLZ(d, i) {
-  d3.select(this).attr("fill", "grey");
+  d3.select(this).attr("fill", function(d, i) {
+    var plz = ""+d.properties.postleitzahl;
+    var filtered = plzdata.filter(function(d) { if(d.PLZ==plz) return d});
+    if(filtered.length>0 && filtered[filtered.length-1].NewConfCases_7days != "0-3") return "green";
+    return "grey";
+  });
   document.getElementById("plz"+d.properties.postleitzahl).className = "";
 }
 
 function drawPLZTable() {
   var tbody = document.getElementById("plzbody");
-  for(var i=0; i<plzdata.length; i++) {
-    var singlePLZ = plzdata[i];
+
+  var lastDate = plzdata[plzdata.length-1].Date;
+  var dateSplit = lastDate.split("-");
+  var day = parseInt(dateSplit[2]);
+  var month = parseInt(dateSplit[1]);
+  var year = parseInt(dateSplit[0]);
+  var h3 = document.getElementById("lastPLZSubtitle");
+  h3.innerHTML = h3.innerHTML + " " + day+"."+month+"."+year;
+  var filteredPLZData = plzdata.filter(function(d) { if(d.Date==lastDate) return d});
+  for(var i=0; i<filteredPLZData.length; i++) {
+    var singlePLZ = filteredPLZData[i];
     var plz = ""+singlePLZ.PLZ;
     var name = plzNames[plz];
     if(name==undefined) name = "";

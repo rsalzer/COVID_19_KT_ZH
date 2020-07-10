@@ -86,7 +86,7 @@ var plzgeojson = null;
 function getPLZ() {
   var url = 'https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_plz/fallzahlen_kanton_ZH_plz.csv';
   d3.queue()
-    .defer(d3.json, "plz.geojson")
+    .defer(d3.json, "https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_plz/PLZ_gen_epsg4326_F_KTZH_2020.json")
     .defer(d3.csv, url)
     .await(function(error, topo, csvdata) {
       plzdata = csvdata;
@@ -480,12 +480,12 @@ function drawPLZ(csvdata,topodata) {
       .append("path")
       .attr("d", path)
       .attr("id", function(d,i) {
-        var plz = ""+d.properties.postleitzahl;
+        var plz = ""+d.properties.PLZ;
         return "svg"+plz;
       })
       .style("stroke", "white")
       .attr('fill', function(d,i) {
-            var plz = ""+d.properties.postleitzahl;
+            var plz = ""+d.properties.PLZ;
             var filtered = csvdata.filter(function(d) { if(d.PLZ==plz) return d});
             if(filtered.length>0 && filtered[filtered.length-1].NewConfCases_7days != "0-3") return "green";
             return "grey";
@@ -503,7 +503,7 @@ function mouseOverHandlerPLZ(d, i) {
     old = null;
   }
   d3.select(this).attr("fill", "#5592ED");
-  var tr = document.getElementById("plz"+d.properties.postleitzahl);
+  var tr = document.getElementById("plz"+d.properties.PLZ);
   var div = document.getElementById("scrolldiv");
   tr.className = "active";
   if(scroll) div.scrollTop = tr.offsetTop-175;
@@ -511,12 +511,12 @@ function mouseOverHandlerPLZ(d, i) {
 
 function mouseOutHandlerPLZ(d, i) {
   d3.select(this).attr("fill", function(d, i) {
-    var plz = ""+d.properties.postleitzahl;
+    var plz = ""+d.properties.PLZ;
     var filtered = plzdata.filter(function(d) { if(d.PLZ==plz) return d});
     if(filtered.length>0 && filtered[filtered.length-1].NewConfCases_7days != "0-3") return "green";
     return "grey";
   });
-  document.getElementById("plz"+d.properties.postleitzahl).className = "";
+  document.getElementById("plz"+d.properties.PLZ).className = "";
 }
 
 var whichclicked = "";
@@ -542,7 +542,12 @@ function drawPLZTable() {
     population = singlePLZ.Population.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "’");;
     var tr = document.createElement("tr");
     tr.id = "plz"+plz;
-    tr.innerHTML = "<td>"+plz+" "+name+"</td><td>"+population+"</td><td>"+cases+"</td>";
+    if(plz.length>4) {
+      tr.innerHTML = "<td colspan=\"2\">"+plz+"</td><td>"+population+"</td><td style=\"text-align: right;\">"+cases+"</td>";
+    }
+    else {
+      tr.innerHTML = "<td>"+plz+"</td><td>"+name+"</td><td>"+population+"</td><td>"+cases+"</td>";
+    }
     tr.onclick = clickElement;
     tbody.append(tr);
   }
@@ -1465,6 +1470,8 @@ function getDateOfISOWeek(w, y) {
 }
 
 var plzNames = {
+5462: "Siglistorf",
+6340: "Baar, Sihlbrugg",
 8001: "Zürich",
 8002: "Zürich",
 8003: "Zürich",
@@ -1476,7 +1483,7 @@ var plzNames = {
 8037: "Zürich",
 8038: "Zürich",
 8041: "Zürich",
-8044: "Gockhausen",
+8044: "Gockhausen,<br/>Zürich",
 8045: "Zürich",
 8046: "Zürich",
 8047: "Zürich",
@@ -1492,10 +1499,11 @@ var plzNames = {
 8102: "Oberengstringen",
 8103: "Unterengstringen",
 8104: "Weiningen ZH",
-8105: "Regensdorf",
+8105: "Regensdorf,<br/>Watt",
 8106: "Adlikon b. Regensdorf",
 8107: "Buchs ZH",
 8108: "Dällikon",
+8109: "Kloster Fahr",
 8112: "Otelfingen",
 8113: "Boppelsen",
 8114: "Dänikon ZH",
@@ -1509,23 +1517,23 @@ var plzNames = {
 8125: "Zollikerberg",
 8126: "Zumikon",
 8127: "Forch",
-8132: "Hinteregg",
+8132: "Egg b. Zürich,<br/>Hinteregg",
 8133: "Esslingen",
 8134: "Adliswil",
-8135: "Sihlwald",
+8135: "Langnau am Albis,<br/>Sihlbrugg Station,<br/>Sihlwald",
 8136: "Gattikon",
 8142: "Uitikon Waldegg",
-8143: "Stallikon",
-8152: "Glattbrugg",
+8143: "Stallikon,<br/>Uetliberg",
+8152: "Glattbrugg,<br/>Opfikon,<br/>Glattpark (Opfikon)",
 8153: "Rümlang",
 8154: "Oberglatt ZH",
-8155: "Nassenwil",
+8155: "Niederhasli,<br/>Nassenwil",
 8156: "Oberhasli",
 8157: "Dielsdorf",
 8158: "Regensberg",
-8162: "Sünikon",
+8162: "Steinmaur,<br/>Sünikon",
 8164: "Bachs",
-8165: "Schleinikon",
+8165: "Oberweningen,<br/>Schleinikon,<br/>Schöfflisdorf",
 8166: "Niederweningen",
 8172: "Niederglatt ZH",
 8173: "Neerach",
@@ -1537,13 +1545,13 @@ var plzNames = {
 8184: "Bachenbülach",
 8185: "Winkel",
 8187: "Weiach",
-8192: "Zweidlen",
+8192: "Glattfelden,<br/>Zweidlen",
 8193: "Eglisau",
 8194: "Hüntwangen",
 8195: "Wasterkingen",
 8196: "Wil ZH",
 8197: "Rafz",
-8212: "Nohl",
+8212: "Nohl,<br/>Neuhausen am Rheinfall",
 8245: "Feuerthalen",
 8246: "Langwiesen",
 8247: "Flurlingen",
@@ -1553,39 +1561,40 @@ var plzNames = {
 8304: "Wallisellen",
 8305: "Dietlikon",
 8306: "Brüttisellen",
-8307: "Effretikon",
-8308: "Illnau",
+8307: "Effretikon,<br/>Ottikon b. Kemptthal",
+8308: "Illnau,<br/>Agasul",
 8309: "Nürensdorf",
-8310: "Grafstal",
+8310: "Kemptthal,<br/>Grafstal",
 8311: "Brütten",
 8312: "Winterberg ZH",
 8314: "Kyburg",
 8315: "Lindau",
 8317: "Tagelswangen",
 8320: "Fehraltorf",
-8322: "Madetswil",
+8322: "Madetswil,<br/>Gündisau",
 8330: "Pfäffikon ZH",
 8331: "Auslikon",
-8332: "Rumlikon",
+8332: "Russikon,<br/>Rumlikon",
 8335: "Hittnau",
 8340: "Hinwil",
 8342: "Wernetshausen",
 8344: "Bäretswil",
 8345: "Adetswil",
-8352: "Ricketwil (Winterthur)",
+8352: "Elsau,<br/>Ricketwil (Winterthur)",
 8353: "Elgg",
-8354: "Hofstetten ZH",
+8354: "Hofstetten ZH,<br/>Dickbuch",
+8355: "Aadorf",
+8363: "Bichelsee",
 8400: "Winterthur",
-8403: "Winterthur",
-8404: "Reutlingen (Winterthur)",
+8404: "Winterthur,<br/>Reutlingen (Winterthur),<br/>Stadel (Winterthur)",
 8405: "Winterthur",
 8406: "Winterthur",
 8408: "Winterthur",
 8409: "Winterthur",
-8412: "Aesch (Neftenbach)",
+8412: "Aesch (Neftenbach),<br/>Riet (Neftenbach),<br/>Hünikon (Neftenbach)",
 8413: "Neftenbach",
 8414: "Buch am Irchel",
-8415: "Berg am Irchel",
+8415: "Berg am Irchel,<br/>Gräslikon",
 8416: "Flaach",
 8418: "Schlatt ZH",
 8421: "Dättlikon",
@@ -1593,7 +1602,7 @@ var plzNames = {
 8424: "Embrach",
 8425: "Oberembrach",
 8426: "Lufingen",
-8427: "Rorbas",
+8427: "Freienstein,<br/>Rorbas",
 8428: "Teufen ZH",
 8442: "Hettlingen",
 8444: "Henggart",
@@ -1610,11 +1619,11 @@ var plzNames = {
 8462: "Rheinau",
 8463: "Benken ZH",
 8464: "Ellikon am Rhein",
-8465: "Wildensbuch",
+8465: "Rudolfingen,<br/>Wildensbuch",
 8466: "Trüllikon",
 8467: "Truttikon",
-8468: "Guntalingen",
-8471: "Bänk (Dägerlen)",
+8468: "Waltalingen,<br/>Guntalingen",
+8471: "Rutschwil (Dägerlen),<br/>Dägerlen,<br/>Oberwil (Dägerlen),<br/>Berg (Dägerlen),<br/>Bänk (Dägerlen)",
 8472: "Seuzach",
 8474: "Dinhard",
 8475: "Ossingen",
@@ -1624,11 +1633,11 @@ var plzNames = {
 8479: "Altikon",
 8482: "Sennhof (Winterthur)",
 8483: "Kollbrunn",
-8484: "Neschwil",
+8484: "Weisslingen,<br/>Neschwil,<br/>Theilingen",
 8486: "Rikon im Tösstal",
-8487: "Zell ZH",
+8487: "Zell ZH,<br/>Rämismühle",
 8488: "Turbenthal",
-8489: "Ehrikon",
+8489: "Wildberg,<br/>Schalchen,<br/>Ehrikon",
 8492: "Wila",
 8493: "Saland",
 8494: "Bauma",
@@ -1637,24 +1646,26 @@ var plzNames = {
 8497: "Fischenthal",
 8498: "Gibswil",
 8499: "Sternenberg",
+8500: "Frauenfeld,<br/>Gerlikon",
 8523: "Hagenbuch ZH",
+8525: "Wilen b. Neunforn,<br/>Niederneunforn",
 8542: "Wiesendangen",
-8543: "Kefikon ZH",
+8543: "Bertschikon,<br/>Gundetswil,<br/>Kefikon ZH",
 8544: "Attikon",
-8545: "Rickenbach ZH",
-8546: "Menzengrüt",
+8545: "Rickenbach ZH,<br/>Rickenbach Sulz",
+8546: "Menzengrüt,<br/>Islikon,<br/>Kefikon TG",
 8548: "Ellikon an der Thur",
 8600: "Dübendorf",
 8602: "Wangen b. Dübendorf",
 8603: "Schwerzenbach",
 8604: "Volketswil",
 8605: "Gutenswil",
-8606: "Nänikon",
+8606: "Greifensee,<br/>Nänikon",
 8607: "Aathal-Seegräben",
 8608: "Bubikon",
 8610: "Uster",
-8614: "Bertschikon (Gossau ZH)",
-8615: "Freudwil",
+8614: "Bertschikon (Gossau ZH),<br/>Sulzbach",
+8615: "Wermatswil,<br/>Freudwil",
 8616: "Riedikon",
 8617: "Mönchaltorf",
 8618: "Oetwil am See",
@@ -1704,10 +1715,10 @@ var plzNames = {
 8911: "Rifferswil",
 8912: "Obfelden",
 8913: "Ottenbach",
-8914: "Aeugst am Albis",
+8914: "Aeugst am Albis,<br/>Aeugstertal",
 8915: "Hausen am Albis",
 8925: "Ebertswil",
-8926: "Kappel am Albis",
+8926: "Kappel am Albis,<br/>Hauptikon,<br/>Uerzlikon",
 8932: "Mettmenstetten",
 8933: "Maschwanden",
 8934: "Knonau",

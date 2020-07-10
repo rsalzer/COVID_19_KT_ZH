@@ -164,6 +164,11 @@ table tr th:nth-child(2),
 table tr td:nth-child(2) {
 	text-align: right;
 }
+.tableFixHead tr td:nth-child(1),
+.tableFixHead tr td:nth-child(2),
+.tableFixHead tr th:nth-child(2) {
+  text-align: left;
+}
 .table-group {
 /* 	background-color: lightblue; */
 	max-width: 640px;

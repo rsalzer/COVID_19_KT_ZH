@@ -479,6 +479,10 @@ function drawPLZ(csvdata,topodata) {
       .enter()
       .append("path")
       .attr("d", path)
+      .attr("id", function(d,i) {
+        var plz = ""+d.properties.postleitzahl;
+        return "svg"+plz;
+      })
       .style("stroke", "white")
       .attr('fill', function(d,i) {
             var plz = ""+d.properties.postleitzahl;
@@ -493,11 +497,16 @@ function drawPLZ(csvdata,topodata) {
 };
 
 function mouseOverHandlerPLZ(d, i) {
+  if(old) {
+    var evt2 = new MouseEvent("mouseout");
+    d3.select(old).node().dispatchEvent(evt2);
+    old = null;
+  }
   d3.select(this).attr("fill", "#5592ED");
   var tr = document.getElementById("plz"+d.properties.postleitzahl);
   var div = document.getElementById("scrolldiv");
   tr.className = "active";
-  div.scrollTop = tr.offsetTop-175;
+  if(scroll) div.scrollTop = tr.offsetTop-175;
 }
 
 function mouseOutHandlerPLZ(d, i) {
@@ -510,6 +519,7 @@ function mouseOutHandlerPLZ(d, i) {
   document.getElementById("plz"+d.properties.postleitzahl).className = "";
 }
 
+var whichclicked = "";
 function drawPLZTable() {
   var tbody = document.getElementById("plzbody");
 
@@ -533,8 +543,20 @@ function drawPLZTable() {
     var tr = document.createElement("tr");
     tr.id = "plz"+plz;
     tr.innerHTML = "<td>"+plz+" "+name+"</td><td>"+population+"</td><td>"+cases+"</td>";
+    tr.onclick = clickElement;
     tbody.append(tr);
   }
+}
+
+var old = null;
+var scroll = true;
+function clickElement(event) {
+  var evt = new MouseEvent("mouseover");
+  var which = event.currentTarget.id.replace("plz", "#svg");
+  scroll = false;
+  d3.select(which).node().dispatchEvent(evt);
+  scroll = true;
+  old = which;
 }
 
 Chart.Tooltip.positioners.custom = function(elements, eventPosition) { //<-- custom is now the new option for the tooltip position

@@ -484,17 +484,24 @@ function drawPLZ(csvdata,topodata) {
         return "svg"+plz;
       })
       .style("stroke", "white")
-      .attr('fill', function(d,i) {
-            var plz = ""+d.properties.PLZ;
-            var filtered = csvdata.filter(function(d) { if(d.PLZ==plz) return d});
-            if(filtered.length>0 && filtered[filtered.length-1].NewConfCases_7days != "0-3") return "green";
-            return "grey";
-        })
+      .attr('fill', getColor)
       .on("mouseover", mouseOverHandlerPLZ)
       .on("mouseout", mouseOutHandlerPLZ);
 
     drawPLZTable();
 };
+
+function getColor(d, i) {
+        var plz = ""+d.properties.PLZ;
+        var filtered = plzdata.filter(function(d) { if(d.PLZ==plz) return d});
+        if(filtered.length>0 && filtered[filtered.length-1].NewConfCases_7days != "0-3") {
+          var cases = filtered[filtered.length-1].NewConfCases_7days;
+          if(cases=="7-9") return colors2[2];
+          else if(cases=="10-12") return colors2[3];
+          else return colors2[1]; //4-6 cases
+        }
+        return "grey";
+}
 
 function mouseOverHandlerPLZ(d, i) {
   if(old) {
@@ -510,12 +517,7 @@ function mouseOverHandlerPLZ(d, i) {
 }
 
 function mouseOutHandlerPLZ(d, i) {
-  d3.select(this).attr("fill", function(d, i) {
-    var plz = ""+d.properties.PLZ;
-    var filtered = plzdata.filter(function(d) { if(d.PLZ==plz) return d});
-    if(filtered.length>0 && filtered[filtered.length-1].NewConfCases_7days != "0-3") return "green";
-    return "grey";
-  });
+  d3.select(this).attr("fill", getColor);
   document.getElementById("plz"+d.properties.PLZ).className = "";
 }
 

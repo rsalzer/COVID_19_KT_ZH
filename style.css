@@ -126,7 +126,7 @@ table {
 	border-collapse: collapse;
 }
 .tableFixHead          { overflow-y: auto; height: 350px; float: right; }
-.tableFixHead thead th { position: sticky; top: 0; background-color: var(--color-background); border-top-width: 0px; }
+.tableFixHead thead th { position: sticky; top: 0; background-color: var(--color-background); border-top-width: 0; }
 .tableFixHead table {
   font-size: 12px; 
 }

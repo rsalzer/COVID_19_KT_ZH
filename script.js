@@ -545,7 +545,7 @@ function drawPLZTable() {
     var tr = document.createElement("tr");
     tr.id = "plz"+plz;
     if(plz.length>4) {
-      tr.innerHTML = "<td colspan=\"2\">"+plz+"</td><td>"+population+"</td><td style=\"text-align: right;\">"+cases+"</td>";
+      tr.innerHTML = "<td colspan=\"2\">"+plz+"</td><td style=\"text-align: right;\">"+population+"</td><td style=\"text-align: right;\">"+cases+"</td>";
     }
     else {
       tr.innerHTML = "<td>"+plz+"</td><td>"+name+"</td><td>"+population+"</td><td>"+cases+"</td>";

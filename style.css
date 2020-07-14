@@ -172,6 +172,11 @@ table tr td:nth-child(2) {
 .tableFixHead tr th:nth-child(2) {
   text-align: left;
 }
+#plzchangestable tr td:nth-child(1),
+#plzchangestable tr td:nth-child(2),
+#plzchangestable tr th:nth-child(2) {
+  text-align: left;
+}
 .table-group {
 /* 	background-color: lightblue; */
 	max-width: 640px;

@@ -53,7 +53,7 @@ document.getElementById("loaded").style.display = 'none';
 getCantonZH();
 getBezirke();
 getPLZ();
-getAge();
+//getAge();
 
 function getCantonZH() {
   var url = 'https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_kanton_total_csv_v2/COVID19_Fallzahlen_Kanton_ZH_total.csv';
@@ -514,11 +514,13 @@ function mouseOverHandlerPLZ(d, i) {
   var div = document.getElementById("scrolldiv");
   tr.className = "active";
   if(scroll) div.scrollTop = tr.offsetTop-175;
+  if(document.getElementById("plzchange"+d.properties.PLZ)) document.getElementById("plzchange"+d.properties.PLZ).className = "active";
 }
 
 function mouseOutHandlerPLZ(d, i) {
   d3.select(this).attr("fill", getColor);
   document.getElementById("plz"+d.properties.PLZ).className = "";
+  if(document.getElementById("plzchange"+d.properties.PLZ)) document.getElementById("plzchange"+d.properties.PLZ).className = "";
 }
 
 var whichclicked = "";
@@ -533,9 +535,17 @@ function drawPLZTable() {
   var h3 = document.getElementById("lastPLZSubtitle");
   h3.innerHTML = h3.innerHTML + " " + day+"."+month+"."+year;
   var filteredPLZData = plzdata.filter(function(d) { if(d.Date==lastDate) return d});
+  var changes = [];
   for(var i=0; i<filteredPLZData.length; i++) {
     var singlePLZ = filteredPLZData[i];
     var plz = ""+singlePLZ.PLZ;
+    var filterForPLZ = plzdata.filter(function(d) { if(d.PLZ==plz) return d});
+    var yesterday = filterForPLZ[filterForPLZ.length-2];
+    if(yesterday.NewConfCases_7days != singlePLZ.NewConfCases_7days) {
+      singlePLZ.oldNewConfCases_7days = yesterday.NewConfCases_7days;
+      singlePLZ.oldDate = yesterday.Date;
+      changes.push(singlePLZ);
+    }
     var name = plzNames[plz];
     if(name==undefined) name = "";
     var cases = '';
@@ -553,6 +563,48 @@ function drawPLZTable() {
     tr.onclick = clickElement;
     tbody.append(tr);
   }
+  drawChangesTable(changes);
+}
+
+function drawChangesTable(changes) {
+  var tbody = document.getElementById("plzchangesbody");
+  for(var i=0; i<changes.length; i++) {
+    var change = changes[i];
+    var yesterday = change.oldNewConfCases_7days;
+    var today = change.NewConfCases_7days;
+    if(i==0) {
+      var tday = document.getElementById("tday");
+      var yday = document.getElementById("yday");
+      var dateSplit = change.Date.split("-");
+      var day = parseInt(dateSplit[2]);
+      var month = parseInt(dateSplit[1]);
+      tday.innerHTML = day+"."+month+".";
+      dateSplit = change.oldDate.split("-");
+      day = parseInt(dateSplit[2]);
+      month = parseInt(dateSplit[1]);
+      yday.innerHTML = day+"."+month+".";
+    }
+    var yesterdayParsed = parseInt(yesterday.split("-")[0]);
+    var todayParsed = parseInt(today.split("-")[0]);
+    var symbol = "";
+    if(todayParsed > yesterdayParsed) symbol = "&#8599;&#xFE0E;";
+    else symbol = "&#8600;&#xFE0E;"
+    console.log("Changes: "+change.PLZ+" - Old: "+yesterday+" New: "+today);
+    var tr = document.createElement("tr");
+    tr.id = "plzchange"+change.PLZ;
+    var population = '';
+    population = change.Population.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "’");;
+    var name = plzNames[change.PLZ];
+    if(name==undefined) name = "";
+    if(change.PLZ.length>4) {
+      tr.innerHTML = "<td colspan=\"2\">"+change.PLZ+"</td><td style=\"text-align: right;\">"+population+"</td><td style=\"text-align: right;\">"+yesterday+"</td><td style=\"text-align: right;\">"+today+"</td><td>"+symbol+"</td>";
+    }
+    else {
+      tr.innerHTML = "<td>"+change.PLZ+"</td><td>"+name+"</td><td>"+population+"</td><td>"+yesterday+"</td><td>"+today+"</td><td>"+symbol+"</td>";
+    }
+    tr.onclick = clickChange;
+    tbody.append(tr);
+  }
 }
 
 var old = null;
@@ -563,6 +615,14 @@ function clickElement(event) {
   scroll = false;
   d3.select(which).node().dispatchEvent(evt);
   scroll = true;
+  old = which;
+}
+
+function clickChange(event) {
+  var evt = new MouseEvent("mouseover");
+  var which = event.currentTarget.id.replace("plz", "#svg");
+  which = which.replace("change", "");
+  d3.select(which).node().dispatchEvent(evt);
   old = which;
 }
 
@@ -1588,6 +1648,7 @@ var plzNames = {
 8355: "Aadorf",
 8363: "Bichelsee",
 8400: "Winterthur",
+8403: "Winterthur",
 8404: "Winterthur,<br/>Reutlingen (Wintert.),<br/>Stadel (Wintert.)",
 8405: "Winterthur",
 8406: "Winterthur",

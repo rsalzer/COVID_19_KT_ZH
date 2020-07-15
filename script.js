@@ -498,6 +498,8 @@ function getColor(d, i) {
           var cases = filtered[filtered.length-1].NewConfCases_7days;
           if(cases=="7-9") return colors2[2];
           else if(cases=="10-12") return colors2[3];
+          else if(cases=="13-15") return colors2[5];
+          else if(cases=="16-18") return colors2[6];
           else return colors2[1]; //4-6 cases
         }
         return "grey";

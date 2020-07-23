@@ -493,6 +493,7 @@ function drawPLZ(csvdata,topodata) {
 
 function getColor(d, i) {
         var plz = ""+d.properties.PLZ;
+        if(d.properties.Ortschaftsname=="See") return "blue";
         var filtered = plzdata.filter(function(d) { if(d.PLZ==plz) return d});
         if(filtered.length>0 && filtered[filtered.length-1].NewConfCases_7days != "0-3") {
           var cases = filtered[filtered.length-1].NewConfCases_7days;
@@ -511,6 +512,7 @@ function mouseOverHandlerPLZ(d, i) {
     d3.select(old).node().dispatchEvent(evt2);
     old = null;
   }
+  if(d.properties.Ortschaftsname=="See") return;
   d3.select(this).attr("fill", "#5592ED");
   var tr = document.getElementById("plz"+d.properties.PLZ);
   var div = document.getElementById("scrolldiv");

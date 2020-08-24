@@ -1165,6 +1165,15 @@ function barChartHospitalisations(place, data) {
   canvas.height=250;
   div.appendChild(canvas);
   div.scrollLeft = 1900;
+
+  var div2 = document.getElementById("container_iso");
+  var canvas2 = document.createElement("canvas");
+
+  //canvas.className  = "myClass";
+  canvas2.id = "iso"+place;
+  canvas2.height=250;
+  div2.appendChild(canvas2);
+  div2.scrollLeft = 1900;
   if(!filteredData || filteredData.length<2) return;
   var moreFilteredData = filteredData; //.filter(function(d) { if(d.ncumul_conf!="") return d});
   var dateLabels = moreFilteredData.map(function(d) {
@@ -1176,6 +1185,7 @@ function barChartHospitalisations(place, data) {
     return date;
   });
   var datasets = [];
+  var datasets2 = [];
   var casesHosp = moreFilteredData.map(function(d) {if(d.current_hosp=="") return null; return d.current_hosp});
   datasets.push({
     label: 'Hospitalisiert',
@@ -1227,7 +1237,7 @@ function barChartHospitalisations(place, data) {
   var filteredForIsolated = moreFilteredData.filter(function(d) { if(d.current_isolated!="") return d});
   if(filteredForIsolated.length>0) {
     var casesIsolated = moreFilteredData.map(function(d) {if(d.current_isolated=="") return null; return d.current_isolated});
-    datasets.push({
+    datasets2.push({
       label: 'In Isolation',
       data: casesIsolated,
       fill: false,
@@ -1244,7 +1254,7 @@ function barChartHospitalisations(place, data) {
   var filteredForQuarantined = moreFilteredData.filter(function(d) { if(d.current_quarantined!="") return d});
   if(filteredForQuarantined.length>0) {
     var casesQuarantined = moreFilteredData.map(function(d) {if(d.current_quarantined=="") return null; return d.current_quarantined});
-    datasets.push({
+    datasets2.push({
       label: 'In Quarantäne',
       data: casesQuarantined,
       fill: false,
@@ -1308,6 +1318,61 @@ function barChartHospitalisations(place, data) {
     data: {
       labels: dateLabels,
       datasets: datasets
+    }
+  });
+
+  addAxisButtons(canvas, chart);
+
+  var chart2 = new Chart(canvas2.id, {
+    type: 'line',
+    options: {
+      responsive: false,
+      layout: {
+          padding: {
+              right: 20
+          }
+      },
+      legend: {
+        display: true,
+        position: 'bottom'
+      },
+      title: {
+        display: true,
+        text: 'Fälle in Isolation / Quarantäne'
+      },
+      tooltips: {
+        mode: 'index',
+        intersect: false,
+        bodyFontFamily: 'IBM Plex Mono',
+        callbacks: {
+          label: function(tooltipItems, data) {
+            var value = tooltipItems.value;
+            var index = tooltipItems.index;
+            var datasetIndex = tooltipItems.datasetIndex;
+            var changeStr = "";
+            var title = data.datasets[datasetIndex].label+": ";
+            var titletabbing = 19-title.length;
+            var titlepadding = " ".repeat(titletabbing);
+            if(index>0) {
+                var change = parseInt(value)-parseInt(data.datasets[datasetIndex].data[index-1]);
+                var label = change>0 ? "+"+change : change;
+                changeStr = " ("+label+")";
+                if(Number.isNaN(change)) changeStr = "";
+            }
+            var tabbing = 3-value.length;
+            var padding = " ".repeat(tabbing);
+            return title+titlepadding+value+padding+changeStr;
+          }
+        }
+      },
+      scales: getScales(),
+      plugins: {
+        datalabels: false
+      }
+    },
+    data: {
+      labels: dateLabels,
+      datasets: datasets2
     }
   });
 

@@ -18,6 +18,7 @@ const names = {
 };
 
 const colors2 = ["#a6cee3","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928","#1f78b4"];
+const colors3 = ["#a5df8a", "#ffff99", "#fdbf6f", "#fa9530", "#ff817e", "#e31a1d", "#b15928"];
 //["#8dd3c7","#ffffb3","#bebada","#fb8072","#80b1d3","#fdb462","#b3de69","#fccde5","#d9d9d9","#bc80bd","#ccebc5","#ffed6f"]
 /*
 const oldColors = {
@@ -497,11 +498,13 @@ function getColor(d, i) {
         var filtered = plzdata.filter(function(d) { if(d.PLZ==plz) return d});
         if(filtered.length>0 && filtered[filtered.length-1].NewConfCases_7days != "0-3") {
           var cases = filtered[filtered.length-1].NewConfCases_7days;
-          if(cases=="7-9") return colors2[2];
-          else if(cases=="10-12") return colors2[3];
-          else if(cases=="13-15") return colors2[5];
-          else if(cases=="16-18") return colors2[6];
-          else return colors2[1]; //4-6 cases
+          if(cases=="4-6") return colors3[0];
+          else if(cases=="7-9") return colors3[1];
+          else if(cases=="10-12") return colors3[2];
+          else if(cases=="13-15") return colors3[3];
+          else if(cases=="16-18") return colors3[4];
+          else if(cases=="19-21") return colors3[5]
+          else return colors3[6]; //>21
         }
         return "grey";
 }

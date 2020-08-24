@@ -596,7 +596,7 @@ function drawChangesTable(changes) {
     var symbol = "";
     if(todayParsed > yesterdayParsed) symbol = "&#8599;&#xFE0E;";
     else symbol = "&#8600;&#xFE0E;"
-    console.log("Changes: "+change.PLZ+" - Old: "+yesterday+" New: "+today);
+    //console.log("Changes: "+change.PLZ+" - Old: "+yesterday+" New: "+today);
     var tr = document.createElement("tr");
     tr.id = "plzchange"+change.PLZ;
     var population = '';
@@ -1376,7 +1376,7 @@ function barChartHospitalisations(place, data) {
     }
   });
 
-  addAxisButtons(canvas, chart);
+  addAxisButtons(canvas2, chart2);
 }
 
 function getWeekScales() {

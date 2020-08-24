@@ -1164,16 +1164,15 @@ function barChartHospitalisations(place, data) {
   canvas.id = "hosp"+place;
   canvas.height=250;
   div.appendChild(canvas);
-  div.scrollLeft = 1900;
 
-  var div2 = document.getElementById("container_iso");
+
   var canvas2 = document.createElement("canvas");
 
   //canvas.className  = "myClass";
   canvas2.id = "iso"+place;
   canvas2.height=250;
-  div2.appendChild(canvas2);
-  div2.scrollLeft = 1900;
+  div.appendChild(canvas2);
+  div.scrollLeft = 1900;
   if(!filteredData || filteredData.length<2) return;
   var moreFilteredData = filteredData; //.filter(function(d) { if(d.ncumul_conf!="") return d});
   var dateLabels = moreFilteredData.map(function(d) {
@@ -1359,7 +1358,8 @@ function barChartHospitalisations(place, data) {
                 changeStr = " ("+label+")";
                 if(Number.isNaN(change)) changeStr = "";
             }
-            var tabbing = 3-value.length;
+            var tabbing = 4-value.length;
+            if(tabbing<0) tabbing = 0;
             var padding = " ".repeat(tabbing);
             return title+titlepadding+value+padding+changeStr;
           }

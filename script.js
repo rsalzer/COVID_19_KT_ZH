@@ -16,7 +16,6 @@ const names = {
   111: "Dietikon",
   112: "Zürich"
 };
-
 const colors2 = ["#a6cee3","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928","#1f78b4"];
 const colors3 = ["#a5df8a", "#ffff99", "#fdbf6f", "#fa9530", "#ff817e", "#e31a1d", "#b15928"];
 //["#8dd3c7","#ffffb3","#bebada","#fb8072","#80b1d3","#fdb462","#b3de69","#fccde5","#d9d9d9","#bc80bd","#ccebc5","#ffed6f"]
@@ -665,7 +664,21 @@ function barChartZH(data) {
   div.scrollLeft = 2300;
   var cases = moreFilteredData.map(function(d) {return d.ncumul_conf});
   var diff = [0];
-  for (var i = 1; i < cases.length; i++) diff.push(cases[i] - cases[i - 1]);
+  var avgs = [0];
+  for (var i = 1; i < cases.length; i++) {
+    var singleDiff = cases[i] - cases[i - 1]
+    diff.push(singleDiff);
+    var sum = singleDiff;
+    var num = 1;
+    for(var j=1; j<7; j++) {
+      var x = i-j;
+      if(x<0) break;
+      num++;
+      sum+=diff[x];
+    }
+    var avg = Math.round(sum/num);
+    avgs.push(avg);
+  }
   var chart = new Chart('zh', {
     type: 'bar',
     options: {
@@ -687,22 +700,35 @@ function barChartZH(data) {
         intersect: false,
         bodyFontFamily: 'IBM Plex Mono',
         callbacks: {
-          label: function(tooltipItems, data) {
+          title: function(tooltipItems, data) {
+            var str = tooltipItems[0].label;
+            str = str.replace("Mon", "Montag");
+            str = str.replace("Tue", "Dienstag");
+            str = str.replace("Wed", "Mittwoch");
+            str = str.replace("Thu", "Donnerstag");
+            str = str.replace("Fri", "Freitag");
+            str = str.replace("Sat", "Samstag");
+            str = str.replace("Sun", "Sonntag");
+            return str;
+          },
+          afterLabel: function(tooltipItems, data) {
+            if(tooltipItems.datasetIndex==0) return "";
             var index = tooltipItems.index;
             var value = cases[index];
-            var changeStr = "";
-            if(index>0) {
-                var change = parseInt(value)-parseInt(cases[index-1]);
-                var label = change>0 ? "+"+change : change;
-                changeStr = " ("+label+")";
-            }
-            return value+changeStr;
+            // var changeStr = "";
+            // if(index>0) {
+            //     var change = parseInt(value)-parseInt(cases[index-1]);
+            //     var label = change>0 ? "+"+change : change;
+            //     changeStr = " ("+label+")";
+            // }
+            return "Total : "+value;
           }
         }
       },
       scales: getScales(),
       plugins: {
         datalabels: {
+          display: false,
           color: inDarkMode() ? '#ccc' : 'black',
           font: {
             weight: 'bold'
@@ -714,6 +740,13 @@ function barChartZH(data) {
     labels: dateLabels,
     datasets: [
       {
+        label: '7d-Avg',
+        data: avgs,
+        borderColor: 'white',
+        type: 'line',
+      },
+      {
+        label: 'Diff. ',
         data: diff,
         fill: false,
         cubicInterpolationMode: 'monotone',
@@ -721,6 +754,7 @@ function barChartZH(data) {
         borderColor: '#F15F36',
         backgroundColor: '#F15F36',
         datalabels: {
+          display: true,
           align: 'end',
           anchor: 'end'
         }
@@ -1418,7 +1452,7 @@ function getScales() {
     xAxes: [{
       type: 'time',
       time: {
-        tooltipFormat: 'DD.MM.YYYY',
+        tooltipFormat: 'ddd DD.MM.YYYY',
         unit: 'day',
         displayFormats: {
           day: 'DD.MM'

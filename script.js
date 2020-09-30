@@ -58,9 +58,10 @@ getPLZ();
 function getCantonZH() {
   var url = 'https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_kanton_total_csv_v2/COVID19_Fallzahlen_Kanton_ZH_total.csv';
   d3.csv(url, function(error, csvdata) {
-    barChartZH(csvdata);
+    data = csvdata;
+    barChartZH(true);
     barChartZHDeaths(csvdata);
-    barChartHospitalisations('ZH', csvdata);
+    barChartHospitalisations('ZH');
     document.getElementById("loadingspinner").style.display = 'none';
     document.getElementById("loaded").style.display = 'block';
   });
@@ -69,7 +70,7 @@ function getCantonZH() {
 function getBezirke() {
   var url = 'https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_bezirke/fallzahlen_kanton_ZH_bezirk.csv';
   d3.queue()
-    .defer(d3.json, "bezirke.json")
+    .defer(d3.json, "https://raw.githubusercontent.com/rsalzer/COVID_19_KT_ZH/master/bezirke.json")
     .defer(d3.csv, url)
     .await(function(error, topo, csvdata) {
       drawBezirke(csvdata, topo);
@@ -646,11 +647,40 @@ Chart.Tooltip.positioners.custom = function(elements, eventPosition) { //<-- cus
     };
 }
 
-function barChartZH(data) {
+function toggleLength(e) {
+  var short = false;
+  if(chartZH.data.datasets[0].data.length>200) short = true;
+  if(short) e.target.innerHTML = "Ab März";
+  else e.target.innerHTML = "Ab Juni";
+  console.log("Length = "+chartZH.data.datasets[0].data.length);
+  var filteredCases = filterCasesZH(short);
+  var dateLabels = filteredCases[0];
+  var diff = filteredCases[1];
+  var avgs = filteredCases[2];
+  var cases = filteredCases[3];
+  chartZH.data.labels = dateLabels;
+  chartZH.data.datasets[0].data = avgs;
+  chartZH.data.datasets[1].data = diff;
+  chartZH.options.scales.xAxes[0].ticks.min = short ? new Date("2020-05-31T23:00:00") : new Date("2020-02-24T23:00:00");
+  chartZH.update(0);
+}
+
+function filterCasesZH(short) {
   var place = "ZH";
   var filteredData = data.filter(function(d) { if(d.abbreviation_canton_and_fl==place) return d});
   if(!filteredData || filteredData.length<2) return;
   var moreFilteredData = filteredData.filter(function(d) { if(d.ncumul_conf!="") return d});
+  if(short) {
+    var referenceDate = new Date("2020-05-31T23:00:00");
+    moreFilteredData = moreFilteredData.filter(function(d) {
+      var dateSplit = d.date.split("-");
+      var day = parseInt(dateSplit[2]);
+      var month = parseInt(dateSplit[1])-1;
+      var year = parseInt(dateSplit[0]);
+      var date = new Date(year,month,day);
+      if(date>referenceDate) return true;
+    });
+  }
   var dateLabels = moreFilteredData.map(function(d) {
     var dateSplit = d.date.split("-");
     var day = parseInt(dateSplit[2]);
@@ -659,9 +689,6 @@ function barChartZH(data) {
     var date = new Date(year,month,day);
     return date;
   });
-  var div = document.getElementById("overview_zh");
-  var canvas = document.getElementById("zh");
-  div.scrollLeft = 2300;
   var cases = moreFilteredData.map(function(d) {return d.ncumul_conf});
   var diff = [0];
   var avgs = [0];
@@ -679,7 +706,20 @@ function barChartZH(data) {
     var avg = Math.round(sum/num);
     avgs.push(avg);
   }
-  var chart = new Chart('zh', {
+  return [dateLabels, diff, avgs, cases];
+}
+
+var chartZH;
+function barChartZH(short) {
+  var filteredCases = filterCasesZH(short);
+  var dateLabels = filteredCases[0];
+  var diff = filteredCases[1];
+  var avgs = filteredCases[2];
+  var cases = filteredCases[3];
+  var div = document.getElementById("overview_zh");
+  var canvas = document.getElementById("zh");
+  div.scrollLeft = 2300;
+  chartZH = new Chart('zh', {
     type: 'bar',
     options: {
       layout: {
@@ -725,7 +765,7 @@ function barChartZH(data) {
           }
         }
       },
-      scales: getScales(),
+      scales: getScales(short),
       plugins: {
         datalabels: {
           display: false,
@@ -763,7 +803,7 @@ function barChartZH(data) {
   }
 });
 
-addAxisButtons(canvas, chart);
+//addAxisButtons(canvas, chartZH);
 
 }
 
@@ -1187,10 +1227,89 @@ function barChartCases(place) {
   addAxisButtons(canvas, chart);
 }
 
-function barChartHospitalisations(place, data) {
+function toggleHospitalisationLength(e) {
+  var short = false;
+  if(chartHosp.data.datasets[0].data.length>150) short = true;
+  if(short) e.target.innerHTML = "Ab März";
+  else e.target.innerHTML = "Ab Juni";
+  console.log("Length = "+chartHosp.data.datasets[0].data.length);
+  var filter = filterHospitalisations(short);
+
+  chartHosp.data.labels = filter.dateLabels;
+  chartHosp.data.datasets[0].data = filter.casesHosp;
+  var i=1;
+  if(filter.casesICU.length>0) {
+    chartHosp.data.datasets[i].data = filter.casesICU;
+    i++;
+  }
+  if(filter.casesVent.length>0) {
+    chartHosp.data.datasets[i].data = filter.casesVent;
+    i++;
+  }
+  chartHosp.options.scales.xAxes[0].ticks.min = short ? new Date("2020-05-31T23:00:00") : new Date("2020-02-24T23:00:00");
+
+  chartIso.data.labels = filter.dateLabels;
+  i=0;
+  if(filter.casesIsolated.length>0) {
+    chartIso.data.datasets[i].data = filter.casesIsolated;
+    i++;
+  }
+  if(filter.casesQuarantined.length>0) {
+    chartIso.data.datasets[i].data = filter.casesQuarantined;
+  }
+  chartIso.options.scales.xAxes[0].ticks.min = short ? new Date("2020-05-31T23:00:00") : new Date("2020-02-24T23:00:00");
+
+  chartHosp.update();
+  chartIso.update();
+}
+
+var chartHosp;
+var chartIso;
+function filterHospitalisations(short) {
+  var place = "ZH";
   var filteredData = data.filter(function(d) { if(d.abbreviation_canton_and_fl==place) return d});
-  var hospitalFiltered = filteredData.filter(function(d) { if(d.current_hosp!="") return d});
-  if(hospitalFiltered.length==0) return;
+  if(!filteredData || filteredData.length<2) return;
+  var moreFilteredData = filteredData.filter(function(d) { if(d.current_hosp!="") return d});
+  if(short) {
+    var referenceDate = new Date("2020-05-31T23:00:00");
+    moreFilteredData = moreFilteredData.filter(function(d) {
+      var dateSplit = d.date.split("-");
+      var day = parseInt(dateSplit[2]);
+      var month = parseInt(dateSplit[1])-1;
+      var year = parseInt(dateSplit[0]);
+      var date = new Date(year,month,day);
+      if(date>referenceDate) return true;
+    });
+  }
+  var dateLabels = moreFilteredData.map(function(d) {
+    var dateSplit = d.date.split("-");
+    var day = parseInt(dateSplit[2]);
+    var month = parseInt(dateSplit[1])-1;
+    var year = parseInt(dateSplit[0]);
+    var date = new Date(year,month,day);
+    return date;
+  });
+  var casesHosp = moreFilteredData.map(function(d) {if(d.current_hosp=="") return null; return d.current_hosp});
+  var filteredForICU = moreFilteredData.filter(function(d) { if(d.current_icu!="") return d});
+  var casesICU = moreFilteredData.map(function(d) {if(d.current_icu=="") return null; return d.current_icu});
+  var filteredForVent = moreFilteredData.filter(function(d) { if(d.current_vent!="") return d});
+  var casesVent = moreFilteredData.map(function(d) {if(d.current_vent=="") return null; return d.current_vent});
+  var filteredForIsolated = moreFilteredData.filter(function(d) { if(d.current_isolated!="") return d});
+  var casesIsolated = moreFilteredData.map(function(d) {if(d.current_isolated=="") return null; return d.current_isolated});
+  var filteredForQuarantined = moreFilteredData.filter(function(d) { if(d.current_quarantined!="") return d});
+  var casesQuarantined = moreFilteredData.map(function(d) {if(d.current_quarantined=="") return null; return d.current_quarantined});
+  return {
+    "dateLabels": dateLabels,
+    "casesHosp": casesHosp,
+    "casesICU": casesICU,
+    "casesVent": casesVent,
+    "casesIsolated": casesIsolated,
+    "casesQuarantined": casesQuarantined
+  };
+}
+
+function barChartHospitalisations(place) {
+  var filter = filterHospitalisations(true);
   var div = document.getElementById("container_hosp");
   var canvas = document.createElement("canvas");
 
@@ -1207,22 +1326,11 @@ function barChartHospitalisations(place, data) {
   canvas2.height=250;
   div.appendChild(canvas2);
   div.scrollLeft = 1900;
-  if(!filteredData || filteredData.length<2) return;
-  var moreFilteredData = filteredData; //.filter(function(d) { if(d.ncumul_conf!="") return d});
-  var dateLabels = moreFilteredData.map(function(d) {
-    var dateSplit = d.date.split("-");
-    var day = parseInt(dateSplit[2]);
-    var month = parseInt(dateSplit[1])-1;
-    var year = parseInt(dateSplit[0]);
-    var date = new Date(year,month,day);
-    return date;
-  });
   var datasets = [];
   var datasets2 = [];
-  var casesHosp = moreFilteredData.map(function(d) {if(d.current_hosp=="") return null; return d.current_hosp});
   datasets.push({
     label: 'Hospitalisiert',
-    data: casesHosp,
+    data: filter.casesHosp,
     fill: false,
     cubicInterpolationMode: 'monotone',
     spanGaps: true,
@@ -1233,12 +1341,10 @@ function barChartHospitalisations(place, data) {
       anchor: 'end'
     }
   });
-  var filteredForICU = moreFilteredData.filter(function(d) { if(d.current_icu!="") return d});
-  if(filteredForICU.length>0) {
-    var casesICU = moreFilteredData.map(function(d) {if(d.current_icu=="") return null; return d.current_icu});
+  if(filter.casesICU.length>0) {
     datasets.push({
       label: 'In Intensivbehandlung',
-      data: casesICU,
+      data: filter.casesICU,
       fill: false,
       cubicInterpolationMode: 'monotone',
       spanGaps: true,
@@ -1250,12 +1356,10 @@ function barChartHospitalisations(place, data) {
       }
     });
   }
-  var filteredForVent = moreFilteredData.filter(function(d) { if(d.current_vent!="") return d});
-  if(filteredForVent.length>0) {
-    var casesVent = moreFilteredData.map(function(d) {if(d.current_vent=="") return null; return d.current_vent});
+  if(filter.casesVent.length>0) {
     datasets.push({
       label: 'Künstlich beatmet',
-      data: casesVent,
+      data: filter.casesVent,
       fill: false,
       cubicInterpolationMode: 'monotone',
       spanGaps: true,
@@ -1267,12 +1371,10 @@ function barChartHospitalisations(place, data) {
       }
     });
   }
-  var filteredForIsolated = moreFilteredData.filter(function(d) { if(d.current_isolated!="") return d});
-  if(filteredForIsolated.length>0) {
-    var casesIsolated = moreFilteredData.map(function(d) {if(d.current_isolated=="") return null; return d.current_isolated});
+  if(filter.casesIsolated.length>0) {
     datasets2.push({
       label: 'In Isolation',
-      data: casesIsolated,
+      data: filter.casesIsolated,
       fill: false,
       cubicInterpolationMode: 'monotone',
       spanGaps: true,
@@ -1284,12 +1386,10 @@ function barChartHospitalisations(place, data) {
       }
     });
   }
-  var filteredForQuarantined = moreFilteredData.filter(function(d) { if(d.current_quarantined!="") return d});
-  if(filteredForQuarantined.length>0) {
-    var casesQuarantined = moreFilteredData.map(function(d) {if(d.current_quarantined=="") return null; return d.current_quarantined});
+  if(filter.casesQuarantined.length>0) {
     datasets2.push({
       label: 'In Quarantäne',
-      data: casesQuarantined,
+      data: filter.casesQuarantined,
       fill: false,
       cubicInterpolationMode: 'monotone',
       spanGaps: true,
@@ -1301,7 +1401,7 @@ function barChartHospitalisations(place, data) {
       }
     });
   }
-  var chart = new Chart(canvas.id, {
+  chartHosp = new Chart(canvas.id, {
     type: 'line',
     options: {
       responsive: false,
@@ -1349,14 +1449,14 @@ function barChartHospitalisations(place, data) {
       }
     },
     data: {
-      labels: dateLabels,
+      labels: filter.dateLabels,
       datasets: datasets
     }
   });
 
-  addAxisButtons(canvas, chart);
+  // addAxisButtons(canvas, chart);
 
-  var chart2 = new Chart(canvas2.id, {
+  chartIso = new Chart(canvas2.id, {
     type: 'line',
     options: {
       responsive: false,
@@ -1405,12 +1505,10 @@ function barChartHospitalisations(place, data) {
       }
     },
     data: {
-      labels: dateLabels,
+      labels: filter.dateLabels,
       datasets: datasets2
     }
   });
-
-  addAxisButtons(canvas2, chart2);
 }
 
 function getWeekScales() {
@@ -1459,7 +1557,7 @@ function getScales() {
         }
       },
       ticks: {
-        min: new Date("2020-02-24T23:00:00"),
+        min: new Date("2020-05-31T23:00:00"),
         max: new Date(),
       },
       gridLines: {

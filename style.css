@@ -128,7 +128,7 @@ table {
 .tableFixHead          { overflow-y: auto; height: 350px; float: right; }
 .tableFixHead thead th { position: sticky; top: 0; background-color: var(--color-background); border-top-width: 0; }
 .tableFixHead table {
-  font-size: 12px; 
+  font-size: 12px;
 }
 table td,
 table th {
@@ -217,6 +217,7 @@ table img {
 	   z-index: 2;
 	}
 	.table-group table {
+    font-size: 13px;
 		display: table;
 		width: 100%;
 		margin-right: 0px;

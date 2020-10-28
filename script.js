@@ -18,6 +18,7 @@ const names = {
 };
 const colors2 = ["#a6cee3","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a","#ffff99","#b15928","#1f78b4"];
 const colors3 = ["#a5df8a", "#ffff99", "#fdbf6f", "#fa9530", "#ff817e", "#e31a1d", "#b15928"];
+const colors4 = ["#ceeacd", "#c4f3af", "#ffffa6", "#fdbf6f", "#fa9530", "#f57229", "#e36f6c", "#e7485f", "#e31a1d", "#b40d0f", "#821f10"];
 //["#8dd3c7","#ffffb3","#bebada","#fb8072","#80b1d3","#fdb462","#b3de69","#fccde5","#d9d9d9","#bc80bd","#ccebc5","#ffed6f"]
 /*
 const oldColors = {
@@ -498,13 +499,17 @@ function getColor(d, i) {
         var filtered = plzdata.filter(function(d) { if(d.PLZ==plz) return d});
         if(filtered.length>0 && filtered[filtered.length-1].NewConfCases_7days != "0-3") {
           var cases = filtered[filtered.length-1].NewConfCases_7days;
-          if(cases=="4-6") return colors3[0];
-          else if(cases=="7-9") return colors3[1];
-          else if(cases=="10-12") return colors3[2];
-          else if(cases=="13-15") return colors3[3];
-          else if(cases=="16-18") return colors3[4];
-          else if(cases=="19-21") return colors3[5]
-          else return colors3[6]; //>21
+          if(cases=="4-6") return colors4[0];
+          else if(cases=="7-9") return colors4[1];
+          else if(cases=="10-12") return colors4[2];
+          else if(cases=="13-15") return colors4[3];
+          else if(cases=="16-18") return colors4[4];
+          else if(cases=="19-21") return colors4[5];
+          else if(cases=="22-24") return colors4[6];
+          else if(cases=="25-27") return colors4[7];
+          else if(cases=="28-30") return colors4[8];
+          else if(cases=="31-33") return colors4[9];
+          else return colors4[10]; //>21
         }
         return "grey";
 }
@@ -604,10 +609,10 @@ function drawChangesTable(changes) {
     var name = plzNames[change.PLZ];
     if(name==undefined) name = "";
     if(change.PLZ.length>4) {
-      tr.innerHTML = "<td colspan=\"2\">"+change.PLZ+"</td><td style=\"text-align: right;\">"+population+"</td><td style=\"text-align: right;\">"+yesterday+"</td><td style=\"text-align: right;\">"+today+"</td><td>"+symbol+"</td>";
+      tr.innerHTML = "<td colspan=\"2\">"+change.PLZ+"</td><td style=\"text-align: right;\">"+yesterday+"</td><td style=\"text-align: right;\">"+today+"</td><td>"+symbol+"</td>";
     }
     else {
-      tr.innerHTML = "<td>"+change.PLZ+"</td><td>"+name+"</td><td>"+population+"</td><td>"+yesterday+"</td><td>"+today+"</td><td>"+symbol+"</td>";
+      tr.innerHTML = "<td>"+change.PLZ+"</td><td>"+name+"</td><td>"+yesterday+"</td><td>"+today+"</td><td>"+symbol+"</td>";
     }
     tr.onclick = clickChange;
     tbody.append(tr);

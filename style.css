@@ -133,6 +133,7 @@ table {
 table td,
 table th {
 	text-align: right;
+  white-space: nowrap;
 	padding: 0.2em 0.5em;
 	border-top: 1px solid #ccc;
 	border-bottom: 1px solid #ccc;

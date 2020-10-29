@@ -214,6 +214,10 @@ table img {
     z-index: 1;
 }
 @media (max-width: 660px) {
+  table td,
+	table th {
+		padding: 0.2em 0.3em;
+	}
 	.state-indicator {
 	   z-index: 2;
 	}

@@ -93,6 +93,7 @@ function getPLZ() {
     .await(function(error, topo, csvdata) {
       plzdata = csvdata;
       plzgeojson = topo;
+      drawPLZTable();
       drawPLZ(csvdata, topo);
     });
 }
@@ -489,27 +490,42 @@ function drawPLZ(csvdata,topodata) {
       .attr('fill', getColor)
       .on("mouseover", mouseOverHandlerPLZ)
       .on("mouseout", mouseOutHandlerPLZ);
+};
 
-    drawPLZTable();
+let incidenceColors = {
+  "low": "#008000",
+  "medium": "#ffa500",
+  "high": "#ff0000",
+  "higher": "#b33c7c",
+  "highest": "#842b9e",
+  "extreme": "#45239f"
 };
 
 function getColor(d, i) {
         var plz = ""+d.properties.PLZ;
         if(d.properties.Ortschaftsname=="See") return "blue";
         var filtered = plzdata.filter(function(d) { if(d.PLZ==plz) return d});
-        if(filtered.length>0 && filtered[filtered.length-1].NewConfCases_7days != "0-3") {
-          var cases = filtered[filtered.length-1].NewConfCases_7days;
-          if(cases=="4-6") return colors4[0];
-          else if(cases=="7-9") return colors4[1];
-          else if(cases=="10-12") return colors4[2];
-          else if(cases=="13-15") return colors4[3];
-          else if(cases=="16-18") return colors4[4];
-          else if(cases=="19-21") return colors4[5];
-          else if(cases=="22-24") return colors4[6];
-          else if(cases=="25-27") return colors4[7];
-          else if(cases=="28-30") return colors4[8];
-          else if(cases=="31-33") return colors4[9];
-          else return colors4[10]; //>21
+        if(filtered.length>0) { // && filtered[filtered.length-1].NewConfCases_7days != "0-3") {
+          // var cases = filtered[filtered.length-1].NewConfCases_7days;
+          // if(cases=="4-6") return colors4[0];
+          // else if(cases=="7-9") return colors4[1];
+          // else if(cases=="10-12") return colors4[2];
+          // else if(cases=="13-15") return colors4[3];
+          // else if(cases=="16-18") return colors4[4];
+          // else if(cases=="19-21") return colors4[5];
+          // else if(cases=="22-24") return colors4[6];
+          // else if(cases=="25-27") return colors4[7];
+          // else if(cases=="28-30") return colors4[8];
+          // else if(cases=="31-33") return colors4[9];
+          // else return colors4[10]; //>21
+          var incidence = filtered[filtered.length-1].incidence;
+          var risk = "low";
+          if(incidence>=60) risk = "medium";
+          if(incidence>=120) risk = "high";
+          if(incidence>=240) risk = "higher";
+          if(incidence>=480) risk = "highest";
+          if(incidence>=960) risk = "extreme";
+          return incidenceColors[risk];
         }
         return "grey";
 }
@@ -573,19 +589,25 @@ function drawPLZTable() {
     let casesToday = parseInt(cases);
     let casesAWeekAgo = parseInt(cases7DaysAgo);
     var incidence = Math.round((casesToday + casesAWeekAgo)*100000/population);
-
+    singlePLZ.incidence = incidence;
+    var risk = "low";
+    if(incidence>=60) risk = "medium";
+    if(incidence>=120) risk = "high";
+    if(incidence>=240) risk = "higher";
+    if(incidence>=480) risk = "highest";
+    if(incidence>=960) risk = "extreme";
     var tr = document.createElement("tr");
     tr.id = "plz"+plz;
     if(plz.length>4) {
-      tr.innerHTML = "<td colspan=\"2\">"+plz+"</td><td style=\"text-align: right;\">"+cases7DaysAgo+"</td><td style=\"text-align: right;\">"+cases+"</td><td>"+incidence+"</td>";
+      tr.innerHTML = "<td colspan=\"2\">"+plz+"</td><td style=\"text-align: right;\">"+cases7DaysAgo+"</td><td style=\"text-align: right;\">"+cases+"</td><td><span class=\"risk "+risk+"\">"+incidence+"</span></td>";
     }
     else {
-      tr.innerHTML = "<td>"+plz+"</td><td>"+name+"</td><td>"+cases7DaysAgo+"</td><td>"+cases+"</td><td>"+incidence+"</td>";
+      tr.innerHTML = "<td>"+plz+"</td><td>"+name+"</td><td>"+cases7DaysAgo+"</td><td>"+cases+"</td><td><span class=\"risk "+risk+"\">"+incidence+"</span></td>";
     }
     tr.onclick = clickElement;
     tbody.append(tr);
   }
-  drawChangesTable(changes);
+  //drawChangesTable(changes);
 }
 
 function drawChangesTable(changes) {

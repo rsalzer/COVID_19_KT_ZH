@@ -655,7 +655,7 @@ function updatePLZTable(mode) { //0 = incidences; 1 = absolute
     }
   }
   var trHead = document.getElementById("plzheadtr");
-  if(mode==0) trHead.innerHTML = "<th>PLZ</th><th>Ort</th><th>Vorwoche</th><th>7d<th>Inz</th>";
+  if(mode==0) trHead.innerHTML = "<th>PLZ</th><th>Ort</th><th colspan=\"2\">Letzte 2W.<th>Inz</th>";
   else if(mode==1) trHead.innerHTML = "<th>PLZ</th><th>Ort</th><th>Bis gestern</th><th>Bis heute</th>";
   drawPLZ(plzdata, plzgeojson, mode);
 }

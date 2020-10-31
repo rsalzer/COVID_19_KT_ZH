@@ -117,6 +117,13 @@ section > * > article:last-child {
 #confirmed, #plztable {
   float: right;
 }
+.svgButtons {
+  width: 350px;
+  clear: both;
+}
+.svgButton {
+  float: right;
+}
 svg {
 
 }
@@ -340,7 +347,7 @@ button {
 	overflow-x: scroll;
 	/* min-width: 1800px; */
 	width: 100%
-    clear: both;
+  clear: both;
 }
 .zh .chartButtons {
   min-width: 2500px;
@@ -500,6 +507,7 @@ button {
 
 .legend {
 	list-style: none;
+  font-size: 12px;
 }
 
 

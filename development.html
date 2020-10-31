@@ -114,12 +114,16 @@
             </table>
           </div> -->
           <h4 id="lastPLZSubtitle">Rückwirkend vom </h4>
+          <div class="svgButtons">
+            <button class="chartButton active" id="incbutton">Inzidenz</button>
+            <button class="chartButton" id="absbutton">Absolut</button>
+          </div>
           <div class="svg-group">
             <svg id="plzsvg" width="350" height="350"></svg>
             <div class="tableFixHead" id="scrolldiv">
               <table id="plztable" class="tableFixHead">
                 <thead>
-                  <tr>
+                  <tr id="plzheadtr">
                     <th>PLZ</th>
                     <th>Ort</th>
                     <th colspan="2">Neue Fälle</th>

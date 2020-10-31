@@ -93,7 +93,7 @@ function getPLZ() {
     .await(function(error, topo, csvdata) {
       plzdata = csvdata;
       plzgeojson = topo;
-      drawPLZ(csvdata, topo);
+      drawPLZTable();
     });
 }
 
@@ -462,7 +462,7 @@ function mouseOutHandler(d, i) {
   document.getElementById(d.properties.BEZ_ID).className = "";
 }
 
-function drawPLZ(csvdata,topodata) {
+function drawPLZ(csvdata,topodata, mode) {
   var svg = d3.select("#plzsvg"),//.style("background-color", 'red'),
       width = +svg.attr("width"),
       height = +svg.attr("height");
@@ -486,32 +486,52 @@ function drawPLZ(csvdata,topodata) {
         return "svg"+plz;
       })
       .style("stroke", "white")
-      .attr('fill', getColor)
+      .attr('fill', getColor(mode))
       .on("mouseover", mouseOverHandlerPLZ)
-      .on("mouseout", mouseOutHandlerPLZ);
-
-    drawPLZTable();
+      .on("mouseout", mouseOutHandlerPLZ(mode));
 };
 
-function getColor(d, i) {
+let incidenceColors = {
+  "low": "#008000",
+  "medium": "#ffa500",
+  "high": "#ff0000",
+  "higher": "#b33c7c",
+  "highest": "#842b9e",
+  "extreme": "#45239f"
+};
+
+function getColor(mode) {
+    return function (d, i) {
         var plz = ""+d.properties.PLZ;
         if(d.properties.Ortschaftsname=="See") return "blue";
         var filtered = plzdata.filter(function(d) { if(d.PLZ==plz) return d});
-        if(filtered.length>0 && filtered[filtered.length-1].NewConfCases_7days != "0-3") {
-          var cases = filtered[filtered.length-1].NewConfCases_7days;
-          if(cases=="4-6") return colors4[0];
-          else if(cases=="7-9") return colors4[1];
-          else if(cases=="10-12") return colors4[2];
-          else if(cases=="13-15") return colors4[3];
-          else if(cases=="16-18") return colors4[4];
-          else if(cases=="19-21") return colors4[5];
-          else if(cases=="22-24") return colors4[6];
-          else if(cases=="25-27") return colors4[7];
-          else if(cases=="28-30") return colors4[8];
-          else if(cases=="31-33") return colors4[9];
-          else return colors4[10]; //>21
+        if(filtered.length>0) { // &&
+          if(mode==1) {
+            var cases = filtered[filtered.length-1].NewConfCases_7days;
+            if(cases=="0-3") return "grey";
+            else if(cases=="4-6") return colors4[0];
+            else if(cases=="7-9") return colors4[1];
+            else if(cases=="10-12") return colors4[2];
+            else if(cases=="13-15") return colors4[3];
+            else if(cases=="16-18") return colors4[4];
+            else if(cases=="19-21") return colors4[5];
+            else if(cases=="22-24") return colors4[6];
+            else if(cases=="25-27") return colors4[7];
+            else if(cases=="28-30") return colors4[8];
+            else if(cases=="31-33") return colors4[9];
+            else return colors4[10]; //>21
+          }
+          var incidence = filtered[filtered.length-1].incidence;
+          var risk = "low";
+          if(incidence>=60) risk = "medium";
+          if(incidence>=120) risk = "high";
+          if(incidence>=240) risk = "higher";
+          if(incidence>=480) risk = "highest";
+          if(incidence>=960) risk = "extreme";
+          return incidenceColors[risk];
         }
         return "grey";
+      };
 }
 
 function mouseOverHandlerPLZ(d, i) {
@@ -524,58 +544,120 @@ function mouseOverHandlerPLZ(d, i) {
   d3.select(this).attr("fill", "#5592ED");
   var tr = document.getElementById("plz"+d.properties.PLZ);
   var div = document.getElementById("scrolldiv");
-  tr.className = "active";
-  if(scroll) div.scrollTop = tr.offsetTop-175;
+  if(tr!=null) {
+    tr.className = "active";
+    if(scroll) div.scrollTop = tr.offsetTop-175;
+  }
   if(document.getElementById("plzchange"+d.properties.PLZ)) document.getElementById("plzchange"+d.properties.PLZ).className = "active";
 }
 
-function mouseOutHandlerPLZ(d, i) {
-  d3.select(this).attr("fill", getColor);
-  document.getElementById("plz"+d.properties.PLZ).className = "";
-  if(document.getElementById("plzchange"+d.properties.PLZ)) document.getElementById("plzchange"+d.properties.PLZ).className = "";
+function mouseOutHandlerPLZ(mode) {
+  return function(d, i) {
+    d3.select(this).attr("fill", getColor(mode));
+    var tr = document.getElementById("plz"+d.properties.PLZ);
+    if(tr!=null) tr.className = "";
+    if(document.getElementById("plzchange"+d.properties.PLZ)) document.getElementById("plzchange"+d.properties.PLZ).className = "";
+  }
 }
 
 var whichclicked = "";
+var lastDate;
 function drawPLZTable() {
   var tbody = document.getElementById("plzbody");
-
-  var lastDate = plzdata[plzdata.length-1].Date;
+  lastDate = plzdata[plzdata.length-1].Date;
   var dateSplit = lastDate.split("-");
   var day = parseInt(dateSplit[2]);
-  var month = parseInt(dateSplit[1]);
+  var month = parseInt(dateSplit[1])-1;
   var year = parseInt(dateSplit[0]);
+  // var d = new Date(Date.UTC(year,month,day))
+  // d.setDate(d.getDate() - 7);
+  // dateString = d.toISOString();
+  // dateString = dateString.substring(0,10);
   var h3 = document.getElementById("lastPLZSubtitle");
-  h3.innerHTML = h3.innerHTML + " " + day+"."+month+"."+year;
+  h3.innerHTML = h3.innerHTML + " " + day+"."+(month+1)+"."+year;
   var filteredPLZData = plzdata.filter(function(d) { if(d.Date==lastDate) return d});
-  var changes = [];
   for(var i=0; i<filteredPLZData.length; i++) {
     var singlePLZ = filteredPLZData[i];
     var plz = ""+singlePLZ.PLZ;
-    var filterForPLZ = plzdata.filter(function(d) { if(d.PLZ==plz) return d});
-    var yesterday = filterForPLZ[filterForPLZ.length-2];
-    if(yesterday.NewConfCases_7days != singlePLZ.NewConfCases_7days) {
-      singlePLZ.oldNewConfCases_7days = yesterday.NewConfCases_7days;
-      singlePLZ.oldDate = yesterday.Date;
-      changes.push(singlePLZ);
-    }
-    var name = plzNames[plz];
-    if(name==undefined) name = "";
-    var cases = '';
-    var population = '';
-    cases = `${singlePLZ.NewConfCases_7days}`;
-    population = singlePLZ.Population.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "’");;
     var tr = document.createElement("tr");
     tr.id = "plz"+plz;
-    if(plz.length>4) {
-      tr.innerHTML = "<td colspan=\"2\">"+plz+"</td><td style=\"text-align: right;\">"+population+"</td><td style=\"text-align: right;\">"+cases+"</td>";
-    }
-    else {
-      tr.innerHTML = "<td>"+plz+"</td><td>"+name+"</td><td>"+population+"</td><td>"+cases+"</td>";
-    }
     tr.onclick = clickElement;
     tbody.append(tr);
   }
-  drawChangesTable(changes);
+  updatePLZTable(0); //0 == incidences
+  addPLZModeButtons();
+  //drawChangesTable(changes);
+}
+
+function addPLZModeButtons() {
+  var button = document.getElementById('incbutton');
+  button.addEventListener('click', function() {
+    this.classList.add('active');
+    getSiblings(this, '.chartButton.active').forEach(element => element.classList.remove('active'));
+    updatePLZTable(0);
+  });
+  button = document.getElementById('absbutton');
+  button.addEventListener('click', function() {
+    this.classList.add('active');
+    getSiblings(this, '.chartButton.active').forEach(element => element.classList.remove('active'));
+    updatePLZTable(1);
+  });
+}
+
+function updatePLZTable(mode) { //0 = incidences; 1 = absolute
+  var changes = [];
+  var filteredPLZData = plzdata.filter(function(d) { if(d.Date==lastDate) return d});
+  for(var i=0; i<filteredPLZData.length; i++) {
+    var singlePLZ = filteredPLZData[i];
+    var plz = ""+singlePLZ.PLZ;
+    var tr = document.getElementById("plz"+plz);
+    var filterForPLZ = plzdata.filter(function(d) { if(d.PLZ==plz) return d});
+    var yesterday = filterForPLZ[filterForPLZ.length-2];
+    var casesYesterday = yesterday.NewConfCases_7days;
+    if(casesYesterday != singlePLZ.NewConfCases_7days) {
+      singlePLZ.oldNewConfCases_7days = casesYesterday;
+      singlePLZ.oldDate = yesterday.Date;
+      changes.push(singlePLZ);
+    }
+    var daysAgo7 = filterForPLZ[filterForPLZ.length-8];
+    var name = plzNames[plz];
+    if(name==undefined) name = "";
+    var cases = '';
+    cases = `${singlePLZ.NewConfCases_7days}`;
+    var cases7DaysAgo = daysAgo7.NewConfCases_7days;
+
+    let population = parseInt(singlePLZ.Population); //.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "’");
+    let casesToday = parseInt(cases);
+    let casesAWeekAgo = parseInt(cases7DaysAgo);
+    var incidence = Math.round((casesToday + casesAWeekAgo)*100000/population);
+    singlePLZ.incidence = incidence;
+    var risk = "low";
+    if(incidence>=60) risk = "medium";
+    if(incidence>=120) risk = "high";
+    if(incidence>=240) risk = "higher";
+    if(incidence>=480) risk = "highest";
+    if(incidence>=960) risk = "extreme";
+    if(mode==0) {
+      if(plz.length>4) {
+        tr.innerHTML = "<td colspan=\"2\">"+plz+"</td><td style=\"text-align: right;\">"+cases7DaysAgo+"</td><td style=\"text-align: right;\">"+cases+"</td><td><span class=\"risk "+risk+"\">"+incidence+"</span></td>";
+      }
+      else {
+        tr.innerHTML = "<td>"+plz+"</td><td>"+name+"</td><td>"+cases7DaysAgo+"</td><td>"+cases+"</td><td><span class=\"risk "+risk+"\">"+incidence+"</span></td>";
+      }
+    }
+    else if(mode==1) {
+      if(plz.length>4) {
+        tr.innerHTML = "<td colspan=\"2\">"+plz+"</td><td style=\"text-align: right;\">"+casesYesterday+"</td><td style=\"text-align: right;\">"+cases+"</td>";
+      }
+      else {
+        tr.innerHTML = "<td>"+plz+"</td><td>"+name+"</td><td>"+casesYesterday+"</td><td>"+cases+"</td>";
+      }
+    }
+  }
+  var trHead = document.getElementById("plzheadtr");
+  if(mode==0) trHead.innerHTML = "<th>PLZ</th><th>Ort</th><th colspan=\"2\">Letzte 2W.<th>Inz</th>";
+  else if(mode==1) trHead.innerHTML = "<th>PLZ</th><th>Ort</th><th>Bis gestern</th><th>Bis heute</th>";
+  drawPLZ(plzdata, plzgeojson, mode);
 }
 
 function drawChangesTable(changes) {
@@ -1791,7 +1873,7 @@ var plzNames = {
 8132: "Egg b. Zürich,<br/>Hinteregg",
 8133: "Esslingen",
 8134: "Adliswil",
-8135: "Langnau am Albis,<br/>Sihlbrugg Station,<br/>Sihlwald",
+8135: "Langnau am A.,<br/>Sihlbrugg St.,<br/>Sihlwald",
 8136: "Gattikon",
 8142: "Uitikon Waldegg",
 8143: "Stallikon,<br/>Uetliberg",
@@ -1804,11 +1886,11 @@ var plzNames = {
 8158: "Regensberg",
 8162: "Steinmaur,<br/>Sünikon",
 8164: "Bachs",
-8165: "Oberweningen,<br/>Schleinikon,<br/>Schöfflisdorf",
+8165: "Oberweningen,<br/>Schleinikon,<br/>Schöfflisd.",
 8166: "Niederweningen",
 8172: "Niederglatt ZH",
 8173: "Neerach",
-8174: "Stadel b. Niederglatt",
+8174: "Stadel",
 8175: "Windlach",
 8180: "Bülach",
 8181: "Höri",
@@ -1822,7 +1904,7 @@ var plzNames = {
 8195: "Wasterkingen",
 8196: "Wil ZH",
 8197: "Rafz",
-8212: "Nohl,<br/>Neuhausen am Rheinfall",
+8212: "Nohl,<br/>Neuhausen am Rf.",
 8245: "Feuerthalen",
 8246: "Langwiesen",
 8247: "Flurlingen",
@@ -1832,7 +1914,7 @@ var plzNames = {
 8304: "Wallisellen",
 8305: "Dietlikon",
 8306: "Brüttisellen",
-8307: "Effretikon,<br/>Ottikon b. Kemptthal",
+8307: "Effretikon,<br/>Ottikon",
 8308: "Illnau,<br/>Agasul",
 8309: "Nürensdorf",
 8310: "Kemptthal,<br/>Grafstal",
@@ -1851,19 +1933,19 @@ var plzNames = {
 8342: "Wernetshausen",
 8344: "Bäretswil",
 8345: "Adetswil",
-8352: "Elsau,<br/>Ricketwil (Wintert.)",
+8352: "Elsau,<br/>Ricketwil (W.)",
 8353: "Elgg",
-8354: "Hofstetten ZH,<br/>Dickbuch",
+8354: "Hofstetten,<br/>Dickbuch",
 8355: "Aadorf",
 8363: "Bichelsee",
 8400: "Winterthur",
 8403: "Winterthur",
-8404: "Winterthur,<br/>Reutlingen (Wintert.),<br/>Stadel (Wintert.)",
+8404: "Winterthur,<br/>Reutlingen (Wi.),<br/>Stadel (Wi.)",
 8405: "Winterthur",
 8406: "Winterthur",
 8408: "Winterthur",
 8409: "Winterthur",
-8412: "Aesch (Neftenbach),<br/>Riet (Neftenbach),<br/>Hünikon (Neftenbach)",
+8412: "Aesch (Neft.),<br/>Riet (Neft.),<br/>Hünikon (Neft.)",
 8413: "Neftenbach",
 8414: "Buch am Irchel",
 8415: "Berg am Irchel,<br/>Gräslikon",
@@ -1880,8 +1962,8 @@ var plzNames = {
 8444: "Henggart",
 8447: "Dachsen",
 8450: "Andelfingen",
-8451: "Kleinandelfingen",
-8452: "Adlikon b. Andelf.",
+8451: "Kleinandelf.",
+8452: "Adlikon b. And.",
 8453: "Alten",
 8457: "Humlikon",
 8458: "Dorf",
@@ -1895,7 +1977,7 @@ var plzNames = {
 8466: "Trüllikon",
 8467: "Truttikon",
 8468: "Waltalingen,<br/>Guntalingen",
-8471: "Rutschwil (Dägerlen),<br/>Dägerlen,<br/>Oberwil (Dägerlen),<br/>Berg (Dägerlen),<br/>Bänk (Dägerlen)",
+8471: "Rutschwil,<br/>Dägerlen,<br/>Oberwil,<br/>Berg,<br/>Bänk",
 8472: "Seuzach",
 8474: "Dinhard",
 8475: "Ossingen",
@@ -1928,7 +2010,7 @@ var plzNames = {
 8546: "Menzengrüt,<br/>Islikon,<br/>Kefikon TG",
 8548: "Ellikon an der Thur",
 8600: "Dübendorf",
-8602: "Wangen b. Dübendorf",
+8602: "Wangen",
 8603: "Schwerzenbach",
 8604: "Volketswil",
 8605: "Gutenswil",
@@ -1936,7 +2018,7 @@ var plzNames = {
 8607: "Aathal-Seegräben",
 8608: "Bubikon",
 8610: "Uster",
-8614: "Bertschikon (Gossau ZH),<br/>Sulzbach",
+8614: "Bertschikon,<br/>Sulzbach",
 8615: "Wermatswil,<br/>Freudwil",
 8616: "Riedikon",
 8617: "Mönchaltorf",
@@ -1999,5 +2081,5 @@ var plzNames = {
 8952: "Schlieren",
 8953: "Dietikon",
 8954: "Geroldswil",
-8955: "Oetwil a. d. Limmat"
+8955: "Oetwil ad. L."
 };

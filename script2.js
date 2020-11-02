@@ -613,9 +613,9 @@ function updatePLZTable(mode) { //0 = incidences; 1 = absolute
     var tr = document.getElementById("plz"+plz);
     var filterForPLZ = plzdata.filter(function(d) { if(d.PLZ==plz) return d});
     var yesterday = filterForPLZ[filterForPLZ.length-2];
-    var casesYesterday = yesterday.NewConfCases_7days;
-    if(casesYesterday != singlePLZ.NewConfCases_7days) {
-      singlePLZ.oldNewConfCases_7days = casesYesterday;
+    var casesYesterdayString = yesterday.NewConfCases_7days;
+    if(casesYesterdayString != singlePLZ.NewConfCases_7days) {
+      singlePLZ.oldNewConfCases_7days = casesYesterdayString;
       singlePLZ.oldDate = yesterday.Date;
       changes.push(singlePLZ);
     }
@@ -628,6 +628,10 @@ function updatePLZTable(mode) { //0 = incidences; 1 = absolute
 
     let population = parseInt(singlePLZ.Population); //.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "’");
     let casesToday = parseInt(cases);
+    let casesYesterday = parseInt(casesYesterdayString);
+    var symbol = "";
+    if(casesToday > casesYesterday) symbol = "&#8599;&#xFE0E;";
+    else if(casesYesterday > casesToday) symbol = "&#8600;&#xFE0E;"
     let casesAWeekAgo = parseInt(cases7DaysAgo);
     var incidence = Math.round((casesToday + casesAWeekAgo)*100000/population);
     singlePLZ.incidence = incidence;
@@ -647,16 +651,16 @@ function updatePLZTable(mode) { //0 = incidences; 1 = absolute
     }
     else if(mode==1) {
       if(plz.length>4) {
-        tr.innerHTML = "<td colspan=\"2\">"+plz+"</td><td style=\"text-align: right;\">"+casesYesterday+"</td><td style=\"text-align: right;\">"+cases+"</td>";
+        tr.innerHTML = "<td colspan=\"2\">"+plz+"</td><td style=\"text-align: right;\">"+casesYesterdayString+"</td><td style=\"text-align: right;\">"+cases+"</td><td>"+symbol+"</td>";
       }
       else {
-        tr.innerHTML = "<td>"+plz+"</td><td>"+name+"</td><td>"+casesYesterday+"</td><td>"+cases+"</td>";
+        tr.innerHTML = "<td>"+plz+"</td><td>"+name+"</td><td>"+casesYesterdayString+"</td><td>"+cases+"</td><td>"+symbol+"</td>";
       }
     }
   }
   var trHead = document.getElementById("plzheadtr");
   if(mode==0) trHead.innerHTML = "<th>PLZ</th><th>Ort</th><th colspan=\"2\">Letzte 2W.<th>Inz</th>";
-  else if(mode==1) trHead.innerHTML = "<th>PLZ</th><th>Ort</th><th>Bis gestern</th><th>Bis heute</th>";
+  else if(mode==1) trHead.innerHTML = "<th>PLZ</th><th>Ort</th><th>Bis gestern</th><th>Bis heute</th><th></th>";
   drawPLZ(plzdata, plzgeojson, mode);
 }
 

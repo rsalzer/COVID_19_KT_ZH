@@ -72,29 +72,6 @@
         </div>
       </article>
         <article>
-          <h3 id="lastTitle"></h3>
-          <div class="svg-group">
-          <svg id="bezirkssvg" width="350" height="350"></svg>
-          <table id="confirmed">
-						<thead>
-							<tr>
-								<th>Bezirk</th>
-								<th>Gesamtfälle</th>
-                <th>Neue Fälle</th>
-							</tr>
-						</thead>
-						<tbody id="confirmed_1">
-              <!--tr>
-								<td><a class="flag flag-icon-ch flag-icon-squared" href="#detail_SO">SO</a></td>
-								<td>2020-03-26</td>
-								<td>141</td>
-								<td><a href="https://corona.so.ch/">↗</a></td>
-							</tr -->
-            </tbody>
-          </table>
-        </div>
-        </article>
-        <article>
           <h3 id="lastPLZTitle">Neue Fälle nach PLZ über die letzten 7/14 Tage</h3>
           <!-- <h4>Änderungen</h4>
           <div class="table-group">
@@ -185,10 +162,55 @@
           </div>
         </article>
     </section>
+    <section id="hospitalisationdetails">
+      <header>
+  			<h2>Hospitalisierungen</h2>
+      </header>
+      <h3 id="hospitalisierungstitle">Aktuelle Auslastung der Intensivstationen</h3>
+      <div class="table-group">
+        <table>
+          <thead>
+            <tr>
+              <th>Spital</th>
+              <th>Covid</th>
+              <th>Non-Covid</th>
+              <th>Gesamt</the>
+              <th>IPS-Plätze</th>
+              <th>Auslastung</th>
+            </tr>
+          </thead>
+          <tbody id="hospitalisationtable">
+          </tbody>
+        </table>
+      </div>
+    </section>
     <section id="detail">
       <header>
   			<h2>Bezirke</h2>
       </header>
+      <article>
+        <h3 id="lastTitle"></h3>
+        <div class="svg-group">
+        <svg id="bezirkssvg" width="350" height="350"></svg>
+        <table id="confirmed">
+          <thead>
+            <tr>
+              <th>Bezirk</th>
+              <th>Gesamtfälle</th>
+              <th>Neue Fälle</th>
+            </tr>
+          </thead>
+          <tbody id="confirmed_1">
+            <!--tr>
+              <td><a class="flag flag-icon-ch flag-icon-squared" href="#detail_SO">SO</a></td>
+              <td>2020-03-26</td>
+              <td>141</td>
+              <td><a href="https://corona.so.ch/">↗</a></td>
+            </tr -->
+          </tbody>
+        </table>
+      </div>
+      </article>
 
     </section>
   </main>

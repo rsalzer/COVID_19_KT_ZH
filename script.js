@@ -1520,7 +1520,7 @@ function barChartHospitalisations(place) {
             var datasetIndex = tooltipItems.datasetIndex;
             var changeStr = "";
             var title = data.datasets[datasetIndex].label+": ";
-            var titletabbing = 19-title.length;
+            var titletabbing = 25-title.length;
             var titlepadding = " ".repeat(titletabbing);
             if(index>0) {
                 var change = parseInt(value)-parseInt(data.datasets[datasetIndex].data[index-1]);

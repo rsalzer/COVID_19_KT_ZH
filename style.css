@@ -224,13 +224,13 @@ table img {
 @media (max-width: 660px) {
   table td,
 	table th {
-		padding: 0.2em 0.3em;
+		padding: 0.2em 0.2em;
 	}
 	.state-indicator {
 	   z-index: 2;
 	}
 	.table-group table {
-    font-size: 13px;
+    font-size: 12px;
 		display: table;
 		width: 100%;
 		margin-right: 0px;

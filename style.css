@@ -544,6 +544,9 @@ button {
 	border-color: var(--color-main);
 }
 @media (max-width: 660px) {
+  .internationalButton {
+    font-size: 20px;
+  }
   .internationalButton:hover {
   	border-bottom: 2px solid transparent;
   }

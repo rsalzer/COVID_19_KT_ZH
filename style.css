@@ -543,6 +543,14 @@ button {
 	border-bottom: 2px solid #000;
 	border-color: var(--color-main);
 }
+@media (max-width: 660px) {
+  .internationalButton:hover {
+  	border-bottom: 2px solid transparent;
+  }
+  .internationalButton:focus {
+  	border-bottom: 2px solid transparent;
+  }
+}
 
 
 /* Spinner: */

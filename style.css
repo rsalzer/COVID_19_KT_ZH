@@ -280,7 +280,7 @@ table.wide {
 }
 table.wide th {
 	position: relative;
-	height: 190px;
+	height: 100px;
 	vertical-align: bottom;
 }
 table.wide th span {
@@ -293,12 +293,10 @@ table.wide th span {
 	padding-left: 0.5em;
 	padding-bottom: 0.2em;
 }
-table.wide th:nth-child(1),
-table.wide th:nth-child(2), {
+table.wide th:nth-child(1) {
 	position: static;
 }
-table.wide th:nth-child(1) span,
-table.wide th:nth-child(2) span {
+table.wide th:nth-child(1) span {
 /* 	left: 0%; */
 /* 	bottom: 0; */
 /* 	transform: rotate(-90deg) translatey(1.3em); */
@@ -512,7 +510,7 @@ button {
 }
 
 .rightButtonDiv {
-   max-width: 670px;
+   max-width: 640px;
    text-align: right;
 }
 .internationalButton {

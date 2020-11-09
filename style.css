@@ -3,6 +3,7 @@
     color-scheme: light dark;
     --color-main: #000;
     --color-background: #fff;
+    --maxwidth: 700px;
 }
 @media (prefers-color-scheme: dark) {
     :root {
@@ -508,6 +509,41 @@ button {
 .legend {
 	list-style: none;
   font-size: 12px;
+}
+
+.rightButtonDiv {
+   max-width: 670px;
+   text-align: right;
+}
+.internationalButton {
+    clear: both;
+}
+.internationalButton {
+    margin: 1em 1em 1em 0;
+    padding: 0.2em 0;
+	  color: var(--color-main);
+    background-color: transparent;
+    border: 0;
+	  border-bottom: 2px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    text-decoration: capitalize;
+    color: var(--color-main);
+}
+.rightButtonDiv button:last-child {
+  margin: 1em 0em 1em 0;
+}
+.internationalButton:hover {
+	border-bottom: 2px solid #000;
+	border-color: var(--color-main);
+}
+.internationalButton:focus {
+    outline: none;
+}
+.internationalButton.active {
+	cursor: default;
+	border-bottom: 2px solid #000;
+	border-color: var(--color-main);
 }
 
 

@@ -121,14 +121,46 @@ function getSpitalAuslastung() {
   });
 }
 
-function parseSpital() {
-  var lastDate = spitaldata[spitaldata.length-1].date;
-  var lastData = spitaldata.filter(d=>d.date==lastDate);
+var hospDate = null;
+function hospBackward() {
+  var dateSplit = hospDate.split("-");
+  var day = parseInt(dateSplit[2]);
+  var month = parseInt(dateSplit[1])-1;
+  var year = parseInt(dateSplit[0]);
+  var d = new Date(Date.UTC(year,month,day))
+  d.setDate(d.getDate() - 1);
+  var dateString = d.toISOString();
+  dateString = dateString.substring(0,10);
+  parseSpital(dateString);
+}
+
+function hospForward() {
+  var dateSplit = hospDate.split("-");
+  var day = parseInt(dateSplit[2]);
+  var month = parseInt(dateSplit[1])-1;
+  var year = parseInt(dateSplit[0]);
+  var d = new Date(Date.UTC(year,month,day))
+  d.setDate(d.getDate() + 1);
+  var dateString = d.toISOString();
+  dateString = dateString.substring(0,10);
+  parseSpital(dateString);
+}
+
+function parseSpital(date) {
+  if(date==null) {
+    date = spitaldata[spitaldata.length-1].date;
+  }
+  var lastData = spitaldata.filter(d=>d.date==date);
+  var mode = "current_icu_service_certified";
+  var sortedLastData = Array.from(lastData).sort(function(a, b){return b[mode]-a[mode]});
+  if(lastData.length==0) return;
+  hospDate = date;
   var title = document.getElementById("hospitalisierungstitle");
-  title.innerHTML = title.innerHTML+" ("+lastDate+")";
+  title.innerHTML = "Aktuelle Auslastung der Intensivstationen ("+date+")";
   var table = document.getElementById("hospitalisationtable");
-  for(var i=0; i<lastData.length; i++) {
-    var row = lastData[i];
+  table.innerHTML = "";
+  for(var i=0; i<sortedLastData.length; i++) {
+    var row = sortedLastData[i];
     var tr = document.createElement("tr");
     var total = parseInt(row.current_icu_covid)+parseInt(row.current_icu_not_covid);
     var auslastung = Math.round(total * 100 / parseInt(row.current_icu_service_certified));
@@ -1556,7 +1588,7 @@ function barChartHospitalisations(place) {
             var datasetIndex = tooltipItems.datasetIndex;
             var changeStr = "";
             var title = data.datasets[datasetIndex].label+": ";
-            var titletabbing = 19-title.length;
+            var titletabbing = 25-title.length;
             var titlepadding = " ".repeat(titletabbing);
             if(index>0) {
                 var change = parseInt(value)-parseInt(data.datasets[datasetIndex].data[index-1]);

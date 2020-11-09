@@ -54,6 +54,7 @@ document.getElementById("loaded").style.display = 'none';
 getCantonZH();
 getBezirke();
 getPLZ();
+getSpitalAuslastung();
 //getAge();
 
 function getCantonZH() {
@@ -109,6 +110,73 @@ function getAge() {
       parseAgeRange(csvdata, ages, 7);
       parseAge(csvdata, ages);
   });
+}
+
+var spitaldata;
+function getSpitalAuslastung() {
+  var url = 'https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_kanton_zh/COVID19_Belegung_Intensivpflege.csv';
+  d3.csv(url, function(error, csvdata) {
+      spitaldata = csvdata;
+      parseSpital();
+  });
+}
+
+var hospDate = null;
+function hospBackward() {
+  var dateSplit = hospDate.split("-");
+  var day = parseInt(dateSplit[2]);
+  var month = parseInt(dateSplit[1])-1;
+  var year = parseInt(dateSplit[0]);
+  var d = new Date(Date.UTC(year,month,day))
+  d.setDate(d.getDate() - 1);
+  var dateString = d.toISOString();
+  dateString = dateString.substring(0,10);
+  parseSpital(dateString);
+}
+
+function hospForward() {
+  var dateSplit = hospDate.split("-");
+  var day = parseInt(dateSplit[2]);
+  var month = parseInt(dateSplit[1])-1;
+  var year = parseInt(dateSplit[0]);
+  var d = new Date(Date.UTC(year,month,day))
+  d.setDate(d.getDate() + 1);
+  var dateString = d.toISOString();
+  dateString = dateString.substring(0,10);
+  parseSpital(dateString);
+}
+
+function parseSpital(date) {
+  if(date==null) {
+    date = spitaldata[spitaldata.length-1].date;
+  }
+  var lastData = spitaldata.filter(d=>d.date==date);
+  var mode = "current_icu_service_certified";
+  var sortedLastData = Array.from(lastData).sort(function(a, b){return b[mode]-a[mode]});
+  if(lastData.length==0) return;
+  hospDate = date;
+  var title = document.getElementById("hospitalisierungstitle");
+  title.innerHTML = "Aktuelle Auslastung der Intensivstationen ("+date+")";
+  var table = document.getElementById("hospitalisationtable");
+  table.innerHTML = "";
+  for(var i=0; i<sortedLastData.length; i++) {
+    var row = sortedLastData[i];
+    var tr = document.createElement("tr");
+    var total = parseInt(row.current_icu_covid)+parseInt(row.current_icu_not_covid);
+    var auslastung = Math.round(total * 100 / parseInt(row.current_icu_service_certified));
+    tr.innerHTML="<td>"+row.hospital_name+"</td><td>"+row.current_icu_covid+"</td><td>"+row.current_icu_not_covid+"</td><td>"+total+"</td><td>"+row.current_icu_service_certified+"</td><td>"+auslastung+"%</td>";
+    table.appendChild(tr);
+  }
+
+  var totalCovid = lastData.reduce( (prev, curr) => prev+parseInt(curr.current_icu_covid), 0);
+  var totalNonCovid = lastData.reduce( (prev, curr) => prev+parseInt(curr.current_icu_not_covid), 0);
+  var totalCapacity = lastData.reduce( (prev, curr) => prev+parseInt(curr.current_icu_service_certified), 0);
+  var totalBoth = totalCovid+totalNonCovid;
+  var totalAuslastung = Math.round(totalBoth * 100 / totalCapacity);
+  console.log(totalCovid);
+  var tr = document.createElement("tr");
+  tr.innerHTML = "<td><b>TOTAL</b></td><td><b>"+totalCovid+"</b></td><td><b>"+totalNonCovid+"</b></td><td><b>"+totalBoth+"</b></td><td><b>"+totalCapacity+"</b></td><td><b>"+totalAuslastung+"%</b></td>";
+  table.appendChild(tr);
 }
 
 

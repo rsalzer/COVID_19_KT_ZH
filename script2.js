@@ -236,10 +236,6 @@ function parseSpitalHistory() {
         display: true,
         text: 'Auslastung in %'
       },
-      tooltips: {
-        mode: 'index',
-        intersect: false,
-      },
       scales: {
         xAxes: [{
           type: 'time',

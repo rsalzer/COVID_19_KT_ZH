@@ -118,6 +118,7 @@ function getSpitalAuslastung() {
   d3.csv(url, function(error, csvdata) {
       spitaldata = csvdata;
       parseSpital();
+      parseSpitalHistory();
   });
 }
 
@@ -177,6 +178,102 @@ function parseSpital(date) {
   var tr = document.createElement("tr");
   tr.innerHTML = "<td><b>TOTAL</b></td><td><b>"+totalCovid+"</b></td><td><b>"+totalNonCovid+"</b></td><td><b>"+totalBoth+"</b></td><td><b>"+totalCapacity+"</b></td><td><b>"+totalAuslastung+"%</b></td>";
   table.appendChild(tr);
+}
+
+function parseSpitalHistory() {
+  let allDates = spitaldata.map(d => d.date);
+  let uniqueDates = [...new Set(allDates)];
+  let spitalHistory = [];
+  for(let i=0; i<uniqueDates.length; i++) {
+    let singleDate = uniqueDates[i];
+    var dataForDate = spitaldata.filter(d=>d.date==singleDate);
+    var totalCovid = dataForDate.reduce( (prev, curr) => prev+parseInt(curr.current_icu_covid), 0);
+    var totalNonCovid = dataForDate.reduce( (prev, curr) => prev+parseInt(curr.current_icu_not_covid), 0);
+    var totalCapacity = dataForDate.reduce( (prev, curr) => prev+parseInt(curr.current_icu_service_certified), 0);
+    var totalBoth = totalCovid+totalNonCovid;
+    var totalAuslastung = Math.round(totalBoth * 100 / totalCapacity);
+    spitalHistory.push({
+      date: singleDate,
+      totalCovid: totalCovid,
+      totalNonCovid: totalNonCovid,
+      totalCapacity: totalCapacity,
+      totalBoth: totalBoth,
+      totalAuslastung: totalAuslastung
+    });
+  }
+  let auslastung = spitalHistory.map(d=>d.totalAuslastung);
+  var dateLabels = spitalHistory.map(function(d) {
+    var dateSplit = d.date.split("-");
+    var day = parseInt(dateSplit[2]);
+    var month = parseInt(dateSplit[1])-1;
+    var year = parseInt(dateSplit[0]);
+    var date = new Date(year,month,day);
+    return date;
+  });
+  let datasets = [];
+  datasets.push({
+      label: 'Auslastung in %',
+      data: auslastung,
+      fill: false,
+      cubicInterpolationMode: 'monotone',
+      spanGaps: true,
+      borderColor: '#CCCC00',
+      backgroundColor: '#CCCC00'
+    });
+  let chartSpital = new Chart("spitalcanvas", {
+    type: 'line',
+    options: {
+      responsive: false,
+      layout: {
+          padding: {
+              right: 20
+          }
+      },
+      legend: {
+        display: false
+      },
+      title: {
+        display: true,
+        text: 'Auslastung in %'
+      },
+      scales: {
+        xAxes: [{
+          type: 'time',
+          time: {
+            tooltipFormat: 'ddd DD.MM.YYYY',
+            unit: 'day',
+            displayFormats: {
+              day: 'DD.MM'
+            }
+          },
+          ticks: {
+            max: new Date()
+          },
+          gridLines: {
+              color: inDarkMode() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
+          }
+        }],
+        yAxes: [{
+          type: cartesianAxesTypes.LINEAR,
+          position: 'right',
+          ticks: {
+            beginAtZero: true,
+            suggestedMax: 100,
+          },
+          gridLines: {
+              color: inDarkMode() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
+          }
+        }]
+      },
+      plugins: {
+        datalabels: false
+      }
+    },
+    data: {
+      labels: dateLabels,
+      datasets: datasets
+    }
+  });
 }
 
 

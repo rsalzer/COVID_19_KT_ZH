@@ -30,6 +30,7 @@ body {
 	padding-right: 5vw;
 	padding-top: 1em;
 	max-width: 640px;
+  font-size: 0.8em;
 }
 #page-nav ul {
 	list-style: none;
@@ -63,6 +64,7 @@ body {
 /* !main */
 main {
 	padding: 5vw;
+  padding-top: 2vw;
 }
 main a {
 	color: inherit;

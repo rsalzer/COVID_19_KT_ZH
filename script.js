@@ -1253,7 +1253,7 @@ function chartBezirke(data, absolute) {
                 changeStr = " ("+label+")";
                 if(Number.isNaN(change)) changeStr = "";
             }
-            var tabbing = 6-value.length;
+            var tabbing = 8-value.length;
             var padding = " ".repeat(tabbing);
             if(!absolute) changeStr = "";
             return title+titlepadding+value+padding+changeStr;

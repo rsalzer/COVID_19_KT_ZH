@@ -174,7 +174,7 @@ function parseSpital(date) {
   var totalCapacity = lastData.reduce( (prev, curr) => prev+parseInt(curr.current_icu_service_certified), 0);
   var totalBoth = totalCovid+totalNonCovid;
   var totalAuslastung = Math.round(totalBoth * 100 / totalCapacity);
-  console.log(totalCovid);
+  //console.log(totalCovid);
   var tr = document.createElement("tr");
   tr.innerHTML = "<td><b>TOTAL</b></td><td><b>"+totalCovid+"</b></td><td><b>"+totalNonCovid+"</b></td><td><b>"+totalBoth+"</b></td><td><b>"+totalCapacity+"</b></td><td><b>"+totalAuslastung+"%</b></td>";
   table.appendChild(tr);
@@ -555,11 +555,13 @@ function lastBezirksData(data) {
   var table = document.getElementById("confirmed_1");
   for(var i=101; i<=112; i++) {
     var filtered = data.filter(function(d) { if(d.DistrictId==i) return d});
+    console.log(filtered);
     var last = filtered[filtered.length-1];
 
     if(i==101) {
       var week = last.Week;
-      var dateOfWeek = getDateOfISOWeek(week, 2020);
+      var year = last.Year;
+      var dateOfWeek = getDateOfISOWeek(week, year);
       var endDay = new Date(dateOfWeek);
       endDay.setDate(endDay.getDate()+6);
       var text = `Aktueller Stand Bezirke (${formatDate(dateOfWeek)} - ${formatDate(endDay)})`;
@@ -908,7 +910,7 @@ function toggleLength(e) {
   if(chartZH.data.datasets[0].data.length>200) short = true;
   if(short) e.target.innerHTML = "Ab März";
   else e.target.innerHTML = "Ab Juni";
-  console.log("Length = "+chartZH.data.datasets[0].data.length);
+  //console.log("Length = "+chartZH.data.datasets[0].data.length);
   var filteredCases = filterCasesZH(short);
   var dateLabels = filteredCases[0];
   var diff = filteredCases[1];
@@ -1189,7 +1191,8 @@ function chartBezirke(data, absolute) {
     if(i==101) {
       labels = filtered.map(function(d) {
         var week = d.Week;
-        var dateOfWeek = getDateOfISOWeek(week, 2020);
+        var year = d.Year;
+        var dateOfWeek = getDateOfISOWeek(week, year);
         var endDay = new Date(dateOfWeek);
         endDay.setDate(endDay.getDate()+6);
         return /*`Woche ${week}:*/ `${formatDate(dateOfWeek)} - ${formatDate(endDay)}`;
@@ -1290,7 +1293,8 @@ function chartBezirkeDeaths(data, absolute) {
     if(i==101) {
       labels = filtered.map(function(d) {
         var week = d.Week;
-        var dateOfWeek = getDateOfISOWeek(week, 2020);
+        var year = d.Year;
+        var dateOfWeek = getDateOfISOWeek(week, year);
         var endDay = new Date(dateOfWeek);
         endDay.setDate(endDay.getDate()+6);
         return /*`Woche ${week}:*/ `${formatDate(dateOfWeek)} - ${formatDate(endDay)}`;
@@ -1488,7 +1492,7 @@ function toggleHospitalisationLength(e) {
   if(chartHosp.data.datasets[0].data.length>150) short = true;
   if(short) e.target.innerHTML = "Ab März";
   else e.target.innerHTML = "Ab Juni";
-  console.log("Length = "+chartHosp.data.datasets[0].data.length);
+  //console.log("Length = "+chartHosp.data.datasets[0].data.length);
   var filter = filterHospitalisations(short);
 
   chartHosp.data.labels = filter.dateLabels;

@@ -257,6 +257,7 @@ section > * > article:last-child {
 }
 .svg-group {
   display: inline-table;
+  margin-right: 1em;
 }
 #confirmed, #plztable {
   float: right;
@@ -276,7 +277,12 @@ table {
 	font-size: 14px;
 	border-collapse: collapse;
 }
-.tableFixHead          { overflow-y: auto; height: 350px; float: right; }
+.tableFixHead          {
+  overflow-y: auto;
+  height: 350px;
+  width: 350px;
+  float: right;
+}
 .tableFixHead thead th { position: sticky; top: 0; background-color: var(--color-background); border-top-width: 0; }
 .tableFixHead table {
   font-size: 12px;
@@ -331,7 +337,7 @@ table tr td:nth-child(2) {
 }
 .table-group {
 /* 	background-color: lightblue; */
-	max-width: 640px;
+	max-width: 700px;
 }
 .table-group table {
 	display: inline-table;
@@ -372,6 +378,9 @@ table img {
 	.state-indicator {
 	   z-index: 2;
 	}
+  .svgButtons {
+    width: 100%;
+  }
 	.table-group table {
     font-size: 12px;
 		display: table;
@@ -380,6 +389,9 @@ table img {
 	}
   .svg-group {
     text-align: center;
+  }
+  .tableFixHead {
+    width: 100%
   }
   .svg-group table {
     display: table;
@@ -414,7 +426,7 @@ table img {
 /* !wide-table */
 table.wide {
 	width: 100%;
-	max-width: 640px;
+	max-width: 700px;
 }
 @media (max-width: 660px) {
 	table.wide {
@@ -453,6 +465,7 @@ tr.active {
 h3 {
 	margin-bottom: 1em;
 	font-size: 1.125rem;
+  max-width: 700px;
 }
 h4 {
   margin-top: 1em;
@@ -467,6 +480,7 @@ h4 {
 	margin-right: 2em;
 }
 .canvas-dummy {
+  max-width: 100%;
   overflow-x: scroll;
 	border: 1px solid rgba(0,0,0,0.4);
 }
@@ -479,9 +493,6 @@ canvas {
   width: 100%;
 	/* min-width: 1800px; */
 }
-.zh canvas {
-  min-width: 2500px;
-}
 button {
 	font-family: "IBM Plex Sans", sans-serif;
 }
@@ -491,21 +502,18 @@ button {
 	width: 100%
   clear: both;
 }
-.zh .chartButtons {
-  min-width: 2500px;
-}
 
 @media (max-width: 660px) {
 	canvas {
 	  width: 100%;
-		min-width: 600px;
+		/* min-width: 600px; */
 	}
   .age {
     min-width: 500px;
   }
 	.chartButtons {
 		overflow-x: scroll;
-		min-width: 600px;
+		/* min-width: 600px; */
 		width: 100%;
 	    clear: both;
 	}
@@ -653,7 +661,7 @@ button {
 }
 
 .rightButtonDiv {
-   max-width: 640px;
+   max-width: 700px;
    text-align: right;
 }
 .internationalButton {

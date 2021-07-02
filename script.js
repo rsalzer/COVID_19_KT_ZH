@@ -1,6 +1,38 @@
 var data;
 
-const cantons = ['AG', 'AI', 'AR', 'BE', 'BL', 'BS', 'FR', 'GE', 'GL', 'GR', 'JU', 'LU', 'NE', 'NW', 'OW', 'SG', 'SH', 'SO', 'SZ', 'TG', 'TI', 'UR', 'VD', 'VS', 'ZG', 'ZH', 'FL'];
+//const cantons = ['AG', 'AI', 'AR', 'BE', 'BL', 'BS', 'FR', 'GE', 'GL', 'GR', 'JU', 'LU', 'NE', 'NW', 'OW', 'SG', 'SH', 'SO', 'SZ', 'TG', 'TI', 'UR', 'VD', 'VS', 'ZG', 'ZH', 'FL'];
+const cantons = ['ZH'];
+
+const population = {
+  "CH": 8619259,
+  "AG": 687491,
+  "AI": 16136,
+  "AR": 55388,
+  "BE": 1040412,
+  "BL": 289534,
+  "BS": 196386,
+  "FR": 322658,
+  "GE": 504205,
+  "GL": 40713,
+  "GR": 198787,
+  "JU": 73490,
+  "LU": 414364,
+  "NE": 176340,
+  "NW": 43039,
+  "OW": 37906,
+  "SG": 511811,
+  "SH": 82454,
+  "SO": 275661,
+  "SZ": 160289,
+  "TG": 280068,
+  "TI": 350887,
+  "UR": 36732,
+  "VD": 808652,
+  "VS": 345875,
+  "ZG": 127387,
+  "ZH": 1542594,
+  "FL": 38749
+};
 
 const names = {
   101: "Affoltern",
@@ -51,9 +83,9 @@ document.getElementById("loaded").style.display = 'none';
 
 //setLanguageNav();
 includeHTML();
+getPLZ();
 getCantonZH();
 getBezirke();
-getPLZ();
 getSpitalAuslastung();
 //getAge();
 
@@ -61,9 +93,10 @@ function getCantonZH() {
   var url = 'https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_kanton_total_csv_v2/COVID19_Fallzahlen_Kanton_ZH_total.csv';
   d3.csv(url, function(error, csvdata) {
     data = csvdata;
-    barChartZH(true);
-    barChartZHDeaths(csvdata);
-    barChartHospitalisations('ZH');
+    prepareData();
+    barChartCases();
+    barChartZHDeaths();
+    barChartHospitalisations();
     document.getElementById("loadingspinner").style.display = 'none';
     document.getElementById("loaded").style.display = 'block';
   });
@@ -120,6 +153,176 @@ function getSpitalAuslastung() {
       parseSpital();
       parseSpitalHistory();
   });
+}
+
+var mainData;
+function prepareData() {
+  //console.log("Start Processing Data");
+  var mode = 0;
+  var date = new Date();
+  date.setTime(getDateForMode(mode).getTime());
+  var now = new Date();
+  now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+  //alert(now.toISOString());
+  var dataPerDay = [];
+  var emptyFirst = {};
+  emptyFirst.data = [];
+  for(var j=0; j<cantons.length; j++) {
+    var canton = cantons[j];
+    var cantonTotal = {
+      canton: canton,
+      date_ncumul_conf: "Keine Daten",
+      date_ncumul_deceased: "Keine Daten",
+      date_current_hosp: "Keine Daten",
+      ncumul_conf: 0,
+      ncumul_deceased: 0,
+      current_hosp: 0,
+      current_icu: 0,
+      current_vent: 0,
+      current_isolated: 0,
+      current_quarantined: 0
+    };
+    emptyFirst.data.push(cantonTotal);
+  }
+  dataPerDay.push(emptyFirst);
+  var completeIndex = 0;
+  // console.log("Start preping CH cases");
+  while(date<now) {
+    var dateString = date.toISOString();
+    dateString = dateString.substring(0,10);
+    // if(dateString=="2020-06-02") {
+    //   console.log("2020-06-02: Index: "+dataPerDay.length);
+    // }
+    var singleDayObject = {};
+    singleDayObject.date = dateString;
+    singleDayObject.data = [];
+    for(var i=0; i<cantons.length; i++) {
+      var canton = cantons[i];
+      var cantonTotal = getDataForDay(canton, date);
+      if(cantonTotal==null) {
+        cantonTotal = Object.assign({}, dataPerDay[dataPerDay.length-1].data[i]);
+        cantonTotal.diff_ncumul_deceased = null;
+        cantonTotal.diff_ncumul_conf = null;
+        cantonTotal.diff_current_hosp = null;
+        cantonTotal.diff_current_vent = null;
+        cantonTotal.diff_current_icu = null;
+        cantonTotal.diffAvg7Days = null;
+        cantonTotal.incidences14Days = null;
+      }
+      else {
+          if(Number.isNaN(cantonTotal.ncumul_conf)) {
+            cantonTotal.ncumul_conf = dataPerDay[dataPerDay.length-1].data[i].ncumul_conf;
+            cantonTotal.date_ncumul_conf = dataPerDay[dataPerDay.length-1].data[i].date_ncumul_conf;
+            cantonTotal.diff_ncumul_conf = null;
+            cantonTotal.diffAvg7Days = null;
+            cantonTotal.incidences14Days = null;
+            //console.log("Old ncumul conf for: "+canton+" date: "+dateString);
+          }
+          else {
+            cantonTotal.diff_ncumul_conf = cantonTotal.ncumul_conf - dataPerDay[dataPerDay.length-1].data[i].ncumul_conf;
+            if(dataPerDay.length>9) {
+              var diff7Days = cantonTotal.ncumul_conf - dataPerDay[dataPerDay.length-7].data[i].ncumul_conf;
+              cantonTotal.diffAvg7Days = Math.round(diff7Days / 7);
+              if(dataPerDay.length>15) {
+                var diff14Days = cantonTotal.ncumul_conf - dataPerDay[dataPerDay.length-14].data[i].ncumul_conf;
+                cantonTotal.incidences14Days = Math.round(diff14Days / population[canton] * 100000);
+              }
+            }
+          }
+          if(Number.isNaN(cantonTotal.ncumul_deceased)) {
+            cantonTotal.ncumul_deceased = dataPerDay[dataPerDay.length-1].data[i].ncumul_deceased;
+            cantonTotal.date_ncumul_deceased = dataPerDay[dataPerDay.length-1].data[i].date_ncumul_deceased;
+            cantonTotal.diff_ncumul_deceased = null;
+            //console.log("Old ncumul death for: "+canton+" date: "+dateString);
+          }
+          else {
+            cantonTotal.diff_ncumul_deceased = cantonTotal.ncumul_deceased - dataPerDay[dataPerDay.length-1].data[i].ncumul_deceased;
+          }
+          if(Number.isNaN(cantonTotal.current_hosp)) {
+            cantonTotal.current_hosp = dataPerDay[dataPerDay.length-1].data[i].current_hosp;
+            cantonTotal.current_vent = dataPerDay[dataPerDay.length-1].data[i].current_vent;
+            cantonTotal.current_icu = dataPerDay[dataPerDay.length-1].data[i].current_icu;
+            cantonTotal.date_current_hosp = dataPerDay[dataPerDay.length-1].data[i].date_current_hosp;
+            cantonTotal.diff_current_hosp = null;
+            cantonTotal.diff_current_vent = null;
+            cantonTotal.diff_current_icu = null;
+            //console.log("Old ncumul death for: "+canton+" date: "+dateString);
+          }
+          else {
+            cantonTotal.diff_current_hosp = cantonTotal.current_hosp - dataPerDay[dataPerDay.length-1].data[i].current_hosp;
+            if(cantonTotal.current_vent!=null) cantonTotal.diff_current_vent = cantonTotal.current_vent - dataPerDay[dataPerDay.length-1].data[i].current_vent;
+            else cantonTotal.diff_current_vent = null;
+            if(cantonTotal.current_icu!=null) cantonTotal.diff_current_icu = cantonTotal.current_icu - dataPerDay[dataPerDay.length-1].data[i].current_icu;
+            else cantonTotal.diff_current_icu = null;
+          }
+      }
+      singleDayObject.data.push(cantonTotal);
+    }
+    dataPerDay.push(singleDayObject);
+    date.setTime(date.getTime()+86400000);
+  }
+  dataPerDay.splice(0,1);
+  mainData = {};
+  mainData.days = dataPerDay;
+  mainData.completeIndex = dataPerDay.length - completeIndex;
+  total = mainData.days[mainData.days.length-1].total_ncumul_conf;
+  //console.log("CompleteIndex: " + mainData.completeIndex);
+  //console.log("Finished processing data");
+}
+
+function getDataForDay(canton, date) {
+  var dateString = date.toISOString();
+  dateString = dateString.substring(0,10);
+  var filteredData = data.filter(function(d) { if(d.abbreviation_canton_and_fl==canton && d.date==dateString) return d});
+  if(filteredData.length>0) {
+    if(filteredData.length>1) console.log("More then 1 line for "+canton+" date: "+dateString);
+    var obj = {
+      canton: canton,
+      ncumul_conf: parseInt(filteredData[filteredData.length-1].ncumul_conf),
+      ncumul_deceased: parseInt(filteredData[filteredData.length-1].ncumul_deceased),
+      current_hosp: parseInt(filteredData[filteredData.length-1].current_hosp),
+      current_icu: filteredData[filteredData.length-1].current_icu!=""?parseInt(filteredData[filteredData.length-1].current_icu):null,
+      current_vent: filteredData[filteredData.length-1].current_vent!=""?parseInt(filteredData[filteredData.length-1].current_vent):null,
+      date_ncumul_conf: dateString,
+      date_ncumul_deceased: dateString,
+      date_current_hosp: dateString,
+      current_isolated: filteredData[filteredData.length-1].current_isolated!=""?parseInt(filteredData[filteredData.length-1].current_isolated):null,
+      current_quarantined: filteredData[filteredData.length-1].current_quarantined!=""?parseInt(filteredData[filteredData.length-1].current_quarantined):null
+    };
+    return obj;
+  }
+  return null;
+}
+
+var activeFilter;
+function filterAllCH(mode) {
+  var dataPerDay;
+  switch (mode) {
+    case 0:
+      dataPerDay = mainData.days.slice(0);
+      break;
+    case 1:
+      dataPerDay = mainData.days.slice(99);
+      break;
+    case 2:
+      dataPerDay = mainData.days.slice(mainData.days.length-daysBack);
+      break;
+  }
+  var dateLabels = dataPerDay.map(function(d) {
+    var dateSplit = d.date.split("-");
+    var day = parseInt(dateSplit[2]);
+    var month = parseInt(dateSplit[1])-1;
+    var year = parseInt(dateSplit[0]);
+    var date = new Date(year,month,day);
+    return date;
+  });
+  //console.log("Finished filtering");
+  //console.log(dataPerDay);
+  activeFilter = {
+    "dataPerDay": dataPerDay,
+    "dateLabels": dateLabels
+  };
+  return activeFilter;
 }
 
 var hospDate = null;
@@ -967,17 +1170,207 @@ function filterCasesZH(short) {
   return [dateLabels, diff, avgs, cases];
 }
 
-var chartZH;
-function barChartZH(short) {
-  var filteredCases = filterCasesZH(short);
-  var dateLabels = filteredCases[0];
-  var diff = filteredCases[1];
-  var avgs = filteredCases[2];
-  var cases = filteredCases[3];
+function filterCases(placenr, mode) {
+  var place = cantons[placenr];
+  //var filteredData = data.filter(function(d) { if(d.abbreviation_canton_and_fl==place) return d});
+  var filteredData = mainData.days.map(function(d) { var canton = d.data[placenr]; canton.date = d.date; return canton;});
+  //console.log(testData);
+  if(!filteredData || filteredData.length<2) return;
+  var moreFilteredData = filteredData.filter(function(d) { if(d.ncumul_conf!=null) return d});
+  if(mode!=0) {
+    var referenceDate = getDateForMode(mode);
+    moreFilteredData = moreFilteredData.filter(function(d) {
+      var dateSplit = d.date.split("-");
+      var day = parseInt(dateSplit[2])+1; //So we dont get 0 for first diff
+      var month = parseInt(dateSplit[1])-1;
+      var year = parseInt(dateSplit[0]);
+      var date = new Date(year,month,day);
+      if(date>referenceDate) return true;
+    });
+  }
+  var dateLabels = moreFilteredData.map(function(d) {
+    var dateSplit = d.date.split("-");
+    var day = parseInt(dateSplit[2]);
+    var month = parseInt(dateSplit[1])-1;
+    var year = parseInt(dateSplit[0]);
+    var date = new Date(year,month,day);
+    return date;
+  });
+  var cases = moreFilteredData.map(d => d.ncumul_conf);
+  var diff = moreFilteredData.map(d => d.diff_ncumul_conf);
+  var avgs = moreFilteredData.map(d => d.diffAvg7Days);
+  var incidences = moreFilteredData.map(d => d.incidences14Days);
+
+
+  return {
+    "cases": cases,
+    "dateLabels": dateLabels,
+    "diff": diff,
+    "avgs": avgs,
+    "incidences": incidences,
+  }
+}
+
+function filterDeaths(placenr, mode) {
+  var place = cantons[placenr];
+  //var filteredData = data.filter(function(d) { if(d.abbreviation_canton_and_fl==place) return d});
+  var filteredData = mainData.days.map(function(d) { var canton = d.data[placenr]; canton.date = d.date; return canton;});
+  //console.log(testData);
+  if(!filteredData || filteredData.length<2) return;
+  var moreFilteredData = filteredData.filter(function(d) { if(d.ncumul_conf!=null) return d});
+  if(mode!=0) {
+    var referenceDate = getDateForMode(mode);
+    moreFilteredData = moreFilteredData.filter(function(d) {
+      var dateSplit = d.date.split("-");
+      var day = parseInt(dateSplit[2])+1; //So we dont get 0 for first diff
+      var month = parseInt(dateSplit[1])-1;
+      var year = parseInt(dateSplit[0]);
+      var date = new Date(year,month,day);
+      if(date>referenceDate) return true;
+    });
+  }
+  var dateLabels = moreFilteredData.map(function(d) {
+    var dateSplit = d.date.split("-");
+    var day = parseInt(dateSplit[2]);
+    var month = parseInt(dateSplit[1])-1;
+    var year = parseInt(dateSplit[0]);
+    var date = new Date(year,month,day);
+    return date;
+  });
+  var deaths = moreFilteredData.map(d => d.ncumul_deceased);
+  var diff = moreFilteredData.map(d => d.diff_ncumul_deceased);
+  return {
+    "deaths": deaths,
+    "dateLabels": dateLabels,
+    "diff": diff
+  }
+}
+
+function filterHosp(placenr, mode) {
+  var place = cantons[placenr];
+  //var filteredData = data.filter(function(d) { if(d.abbreviation_canton_and_fl==place) return d});
+  var filteredData = mainData.days.map(function(d) { var canton = d.data[placenr]; canton.date = d.date; return canton;});
+  //console.log(testData);
+  if(!filteredData || filteredData.length<2) return;
+  var moreFilteredData = filteredData.filter(function(d) { if(d.ncumul_conf!=null) return d});
+  if(mode!=0) {
+    var referenceDate = getDateForMode(mode);
+    moreFilteredData = moreFilteredData.filter(function(d) {
+      var dateSplit = d.date.split("-");
+      var day = parseInt(dateSplit[2])+1; //So we dont get 0 for first diff
+      var month = parseInt(dateSplit[1])-1;
+      var year = parseInt(dateSplit[0]);
+      var date = new Date(year,month,day);
+      if(date>referenceDate) return true;
+    });
+  }
+  var dateLabels = moreFilteredData.map(function(d) {
+    var dateSplit = d.date.split("-");
+    var day = parseInt(dateSplit[2]);
+    var month = parseInt(dateSplit[1])-1;
+    var year = parseInt(dateSplit[0]);
+    var date = new Date(year,month,day);
+    return date;
+  });
+  //Hospitalisations:
+  var datasets = [];
+  var casesHosp = moreFilteredData.map(function(d) {if(d.diff_current_hosp==null) return null; return d.current_hosp});
+  datasets.push({
+    label: 'Hospitalisiert',
+    data: casesHosp,
+    fill: false,
+    cubicInterpolationMode: 'monotone',
+    spanGaps: true,
+    borderColor: '#CCCC00',
+    backgroundColor: '#CCCC00',
+    datalabels: {
+      align: 'end',
+      anchor: 'end'
+    }
+  });
+  var filteredForICU = moreFilteredData.filter(function(d) { if(d.diff_current_icu!=null) return d});
+  if(filteredForICU.length>0) {
+    var casesICU = moreFilteredData.map(function(d) {if(d.diff_current_icu==null) return null; return d.current_icu});
+    datasets.push({
+      label: 'In Intensivbehandlung',
+      data: casesICU,
+      fill: false,
+      cubicInterpolationMode: 'monotone',
+      spanGaps: true,
+      borderColor: '#CF5F5F',
+      backgroundColor: '#CF5F5F',
+      datalabels: {
+        align: 'end',
+        anchor: 'end'
+      }
+    });
+  }
+  var filteredForVent = moreFilteredData.filter(function(d) { if(d.diff_current_vent!=null) return d});
+  if(filteredForVent.length>0) {
+    var casesVent = moreFilteredData.map(function(d) {if(d.diff_current_vent==null) return null; return d.current_vent});
+    datasets.push({
+      label: 'Künstlich beatmet',
+      data: casesVent,
+      fill: false,
+      cubicInterpolationMode: 'monotone',
+      spanGaps: true,
+      borderColor: '#115F5F',
+      backgroundColor: '#115F5F',
+      datalabels: {
+        align: 'end',
+        anchor: 'end'
+      }
+    });
+  }
+  var datasets2 = [];
+  var casesQuarantined = moreFilteredData.map(function(d) {if(d.current_quarantined==null) return null; return d.current_quarantined});
+  datasets2.push({
+    label: 'In Quarantäne',
+    data: casesQuarantined,
+    fill: false,
+    cubicInterpolationMode: 'monotone',
+    spanGaps: true,
+    borderColor: '#3333AA',
+    backgroundColor: '#3333AA',
+    datalabels: {
+      align: 'end',
+      anchor: 'end'
+    }
+  });
+  var casesIsolated = moreFilteredData.map(function(d) {if(d.current_isolated==null) return null; return d.current_isolated});
+  datasets2.push({
+    label: 'In Isolation',
+    data: casesIsolated,
+    fill: false,
+    cubicInterpolationMode: 'monotone',
+    spanGaps: true,
+    borderColor: '#AF5500',
+    backgroundColor: '#AF5500',
+    datalabels: {
+      align: 'end',
+      anchor: 'end'
+    }
+  });
+  return {
+    "dateLabels": dateLabels,
+    "datasets": datasets,
+    "datasets2": datasets2
+  }
+}
+
+function barChartCases() {
+  var place = 'ZH';
   var div = document.getElementById("overview_zh");
   var canvas = document.getElementById("zh");
-  div.scrollLeft = 2300;
-  chartZH = new Chart('zh', {
+  canvas.id = 'zh';
+  if(getDeviceState()==2) {
+    canvas.height=200;
+  }
+  else {
+    canvas.height=250;
+  }
+  var filter = filterCases(0, 2);
+  var chart = new Chart(canvas.id, {
     type: 'bar',
     options: {
       layout: {
@@ -997,33 +1390,9 @@ function barChartZH(short) {
         mode: 'index',
         intersect: false,
         bodyFontFamily: 'IBM Plex Mono',
-        callbacks: {
-          title: function(tooltipItems, data) {
-            var str = tooltipItems[0].label;
-            str = str.replace("Mon", "Montag");
-            str = str.replace("Tue", "Dienstag");
-            str = str.replace("Wed", "Mittwoch");
-            str = str.replace("Thu", "Donnerstag");
-            str = str.replace("Fri", "Freitag");
-            str = str.replace("Sat", "Samstag");
-            str = str.replace("Sun", "Sonntag");
-            return str;
-          },
-          afterLabel: function(tooltipItems, data) {
-            if(tooltipItems.datasetIndex==0) return "";
-            var index = tooltipItems.index;
-            var value = cases[index];
-            // var changeStr = "";
-            // if(index>0) {
-            //     var change = parseInt(value)-parseInt(cases[index-1]);
-            //     var label = change>0 ? "+"+change : change;
-            //     changeStr = " ("+label+")";
-            // }
-            return "Total : "+value;
-          }
-        }
+        callbacks: getCallbacks(filter),
       },
-      scales: getScales(short),
+      scales: getScales(2),
       plugins: {
         datalabels: {
           display: false,
@@ -1035,123 +1404,195 @@ function barChartZH(short) {
       }
   },
   data: {
-    labels: dateLabels,
+    labels: filter.dateLabels,
     datasets: [
       {
         label: '7d-Avg',
-        data: avgs,
-        borderColor: 'white',
-        type: 'line',
+        data: filter.avgs,
+        cubicInterpolationMode: 'monotone',
+        spanGaps: true,
+        pointRadius: 0,
+        borderWidth: 2,
+        backgroundColor: inDarkMode() ? '#FFFFFF80' : '#77777780',
+        borderColor: inDarkMode() ? '#FFFFFF80' : '#77777780',
+        fill: false,
+        type: 'line'
       },
       {
         label: 'Diff. ',
-        data: diff,
+        data: filter.diff,
         fill: false,
         cubicInterpolationMode: 'monotone',
         spanGaps: true,
         borderColor: '#F15F36',
         backgroundColor: '#F15F36',
         datalabels: {
-          display: true,
           align: 'end',
-          anchor: 'end'
+          anchor: 'end',
+          display: true
         }
       }
     ]
   }
 });
+addFilterLengthButtons(canvas, 0, chart, null);
+}
 
-//addAxisButtons(canvas, chartZH);
+function getCallbacks(filter) {
+  return {
+    title: function(tooltipItems, data) {
+      var str = tooltipItems[0].label;
+      str = str.replace("Mon", "Montag");
+      str = str.replace("Tue", "Dienstag");
+      str = str.replace("Wed", "Mittwoch");
+      str = str.replace("Thu", "Donnerstag");
+      str = str.replace("Fri", "Freitag");
+      str = str.replace("Sat", "Samstag");
+      str = str.replace("Sun", "Sonntag");
+      return str;
+    },
+    afterLabel: function(tooltipItems, data) {
+      if(tooltipItems.datasetIndex==0) return "";
+      var index = tooltipItems.index;
+      var value = filter.cases[index];
+      return "Total : "+value;
+    }
+  };
+}
 
+function getScales(mode) {
+  return {
+    xAxes: [{
+      type: 'time',
+      time: {
+        tooltipFormat: 'ddd DD.MM.YYYY',
+        unit: 'day',
+        displayFormats: {
+          day: 'DD.MM'
+        }
+      },
+      ticks: {
+        min: getDateForMode(mode),
+        max: new Date(),
+      },
+      gridLines: {
+          color: inDarkMode() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
+      }
+    }],
+    yAxes: [{
+      type: cartesianAxesTypes.LINEAR,
+      position: 'right',
+      ticks: {
+        beginAtZero: true,
+        suggestedMax: 7,
+      },
+      gridLines: {
+          color: inDarkMode() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
+      }
+    }]
+  };
+}
+
+function getDataLabels() {
+  return {
+      color: inDarkMode() ? '#ccc' : 'black',
+      font: {
+        weight: 'bold',
+      },
+      formatter: function(value, context) {
+        var index = context.dataIndex;
+        if(index==0) return "";
+        var lastValue = context.dataset.data[index-1];
+        var percentageChange = value/lastValue - 1;
+        var rounded = Math.round(percentageChange * 100);
+        var label = ""+rounded;
+        if(rounded >= 0) label = "+"+label+"%";
+        else label = "-"+label+"%";
+
+        var change = value-lastValue;
+        var label = change>0 ? "+"+change : change;
+        return label;
+      }
+  };
 }
 
 function barChartZHDeaths(data) {
   var place = "ZH";
-  var filteredData = data.filter(function(d) { if(d.abbreviation_canton_and_fl==place) return d});
-  if(!filteredData || filteredData.length<2) return;
-  var moreFilteredData = filteredData.filter(function(d) { if(d.ncumul_deceased!="") return d});
-  var dateLabels = moreFilteredData.map(function(d) {
-    var dateSplit = d.date.split("-");
-    var day = parseInt(dateSplit[2]);
-    var month = parseInt(dateSplit[1])-1;
-    var year = parseInt(dateSplit[0]);
-    var date = new Date(year,month,day);
-    return date;
-  });
+  var filteredData = filterDeaths(0,2);
   var div = document.getElementById("container_"+place);
   var canvas = document.createElement("canvas");
   canvas.id = "death"+place;
   canvas.height=250;
   div.appendChild(canvas);
   div.scrollLeft = 2300;
-  var cases = moreFilteredData.map(function(d) {return d.ncumul_deceased});
-  var diff = [0];
-  for (var i = 1; i < cases.length; i++) diff.push(cases[i] - cases[i - 1]);
+  var cases = filteredData.deaths;
+  var diff = filteredData.diff;
   var chart = new Chart(canvas.id, {
-    type: 'bar',
-    options: {
-      layout: {
-          padding: {
-              right: 20
-          }
-      },
-      responsive: false,
-      legend: {
-        display: false
-      },
-      title: {
-        display: true,
-        text: 'Todesfälle'
-      },
-      tooltips: {
-        mode: 'index',
-        intersect: false,
-        bodyFontFamily: 'IBM Plex Mono',
-        callbacks: {
-          label: function(tooltipItems, data) {
-            var index = tooltipItems.index;
-            var value = cases[index];
-            var changeStr = "";
-            if(index>0) {
-                var change = parseInt(value)-parseInt(cases[index-1]);
-                var label = change>0 ? "+"+change : change;
-                changeStr = " ("+label+")";
+      type: 'bar',
+      options: {
+        layout: {
+            padding: {
+                right: 20
             }
-            return value+changeStr;
+        },
+        responsive: false,
+        legend: {
+          display: false
+        },
+        title: {
+          display: true,
+          text: 'Todesfälle'
+        },
+        tooltips: {
+          mode: 'index',
+          intersect: false,
+          bodyFontFamily: 'IBM Plex Mono',
+          callbacks: {
+            label: function(tooltipItems, data) {
+              var index = tooltipItems.index;
+              var value = cases[index];
+              var changeStr = "";
+              if(index>0) {
+                  var change = parseInt(value)-parseInt(cases[index-1]);
+                  var label = change>0 ? "+"+change : change;
+                  changeStr = " ("+label+")";
+              }
+              return value+changeStr;
+            }
+          }
+        },
+        scales: getScales(),
+        plugins: {
+          datalabels: {
+            display: false,
+            color: inDarkMode() ? '#ccc' : 'black',
+            font: {
+              weight: 'bold'
+            }
           }
         }
-      },
-      scales: getScales(),
-      plugins: {
-        datalabels: {
-          color: inDarkMode() ? '#ccc' : 'black',
-          font: {
-            weight: 'bold'
+    },
+    data: {
+      labels: filteredData.dateLabels,
+      datasets: [
+        {
+          data: diff,
+          fill: false,
+          cubicInterpolationMode: 'monotone',
+          spanGaps: true,
+          borderColor: inDarkMode() ? 'rgba(150, 150, 150, 1)' : '#010101',
+          backgroundColor: inDarkMode() ? 'rgba(150, 150, 150, 1)' : '#010101',
+          datalabels: {
+            align: 'end',
+            anchor: 'end',
+            display: true
           }
         }
-      }
-  },
-  data: {
-    labels: dateLabels,
-    datasets: [
-      {
-        data: diff,
-        fill: false,
-        cubicInterpolationMode: 'monotone',
-        spanGaps: true,
-        borderColor: inDarkMode() ? 'rgba(150, 150, 150, 1)' : '#010101',
-        backgroundColor: inDarkMode() ? 'rgba(150, 150, 150, 1)' : '#010101',
-        datalabels: {
-          align: 'end',
-          anchor: 'end'
-        }
-      }
-    ]
-  }
-});
+      ]
+    }
+  });
 
-addAxisButtons(canvas, chart);
-
+  addDeathFilterLengthButtons(canvas, 0, chart);
 }
 
 function chartBezirke(data, absolute) {
@@ -1379,114 +1820,6 @@ function chartBezirkeDeaths(data, absolute) {
   addAxisButtons(canvas, chart);
 }
 
-function barChartCases(place) {
-  var filteredData = data.filter(function(d) { if(d.abbreviation_canton_and_fl==place) return d});
-  var section = document.getElementById("detail");
-  var article = document.createElement("article");
-  article.id="detail_"+place;
-  var h3 = document.createElement("h3");
-  h3.className = "flag "+place;
-  var text = document.createTextNode(_(names[place]));
-  h3.appendChild(text);
-  var a = document.createElement("a");
-  a.href = "#top";
-  a.innerHTML = "&#x2191;&#xFE0E;";
-  a.className = "toplink";
-  h3.appendChild(a);
-  article.appendChild(h3);
-  var div = document.createElement("div");
-  div.className = "canvas-dummy";
-  div.id = "container_"+place;
-  var canvas = document.createElement("canvas");
-  //canvas.className  = "myClass";
-  if(filteredData.length==0) {
-    div.appendChild(document.createTextNode(_("Keine Daten")));
-  }
-  else if(filteredData.length==1) {
-    div.appendChild(document.createTextNode(_("Ein Datensatz")+": "+filteredData[0].ncumul_conf+" " + _("Fälle am")+" "+filteredData[0].date));
-  }
-  else {
-    canvas.id = place;
-    canvas.height=250;
-    //canvas.width=350+filteredData.length*40;
-    div.appendChild(canvas);
-  }
-  article.appendChild(div);
-  section.appendChild(article);
-  div.scrollLeft = 2300;
-  if(!filteredData || filteredData.length<2) return;
-  var moreFilteredData = filteredData.filter(function(d) { if(d.ncumul_conf!="") return d});
-  var dateLabels = moreFilteredData.map(function(d) {
-    var dateSplit = d.date.split("-");
-    var day = parseInt(dateSplit[2]);
-    var month = parseInt(dateSplit[1])-1;
-    var year = parseInt(dateSplit[0]);
-    var date = new Date(year,month,day);
-    return date;
-  });
-  var cases = moreFilteredData.map(function(d) {return d.ncumul_conf});
-  var chart = new Chart(canvas.id, {
-    type: 'line',
-    options: {
-      layout: {
-          padding: {
-              right: 20
-          }
-      },
-      responsive: false,
-      legend: {
-        display: false
-      },
-      title: {
-        display: true,
-        text: _('Bestätigte Fälle')
-      },
-      tooltips: {
-        mode: 'index',
-        intersect: false,
-        bodyFontFamily: 'IBM Plex Mono',
-        callbacks: {
-          label: function(tooltipItems, data) {
-            var value = tooltipItems.value;
-            var index = tooltipItems.index;
-            var changeStr = "";
-            if(index>0) {
-                var change = parseInt(value)-parseInt(cases[index-1]);
-                var label = change>0 ? "+"+change : change;
-                changeStr = " ("+label+")";
-            }
-            return value+changeStr;
-          }
-        }
-      },
-      scales: getScales(),
-      plugins: {
-        datalabels: getDataLabels()
-      }
-  },
-  data: {
-    labels: dateLabels,
-    datasets: [
-      {
-        data: cases,
-        fill: false,
-        cubicInterpolationMode: 'monotone',
-        spanGaps: true,
-        borderColor: '#F15F36',
-        backgroundColor: '#F15F36',
-        datalabels: {
-          align: 'center',
-          anchor: 'center',
-
-        }
-      }
-    ]
-  }
-});
-
-  addAxisButtons(canvas, chart);
-}
-
 function toggleHospitalisationLength(e) {
   var short = false;
   if(chartHosp.data.datasets[0].data.length>150) short = true;
@@ -1569,7 +1902,7 @@ function filterHospitalisations(short) {
 }
 
 function barChartHospitalisations(place) {
-  var filter = filterHospitalisations(true);
+  var filter = filterHosp(0, 2);
   var div = document.getElementById("container_hosp");
   var canvas = document.createElement("canvas");
 
@@ -1586,81 +1919,37 @@ function barChartHospitalisations(place) {
   canvas2.height=250;
   div.appendChild(canvas2);
   div.scrollLeft = 1900;
-  var datasets = [];
-  var datasets2 = [];
-  datasets.push({
-    label: 'Hospitalisiert',
-    data: filter.casesHosp,
-    fill: false,
-    cubicInterpolationMode: 'monotone',
-    spanGaps: true,
-    borderColor: '#CCCC00',
-    backgroundColor: '#CCCC00',
-    datalabels: {
-      align: 'end',
-      anchor: 'end'
-    }
-  });
-  if(filter.casesICU.length>0) {
-    datasets.push({
-      label: 'In Intensivbehandlung',
-      data: filter.casesICU,
-      fill: false,
-      cubicInterpolationMode: 'monotone',
-      spanGaps: true,
-      borderColor: '#CF5F5F',
-      backgroundColor: '#CF5F5F',
-      datalabels: {
-        align: 'end',
-        anchor: 'end'
-      }
-    });
-  }
-  if(filter.casesVent.length>0) {
-    datasets.push({
-      label: 'Künstlich beatmet',
-      data: filter.casesVent,
-      fill: false,
-      cubicInterpolationMode: 'monotone',
-      spanGaps: true,
-      borderColor: '#115F5F',
-      backgroundColor: '#115F5F',
-      datalabels: {
-        align: 'end',
-        anchor: 'end'
-      }
-    });
-  }
-  if(filter.casesIsolated.length>0) {
-    datasets2.push({
-      label: 'In Isolation',
-      data: filter.casesIsolated,
-      fill: false,
-      cubicInterpolationMode: 'monotone',
-      spanGaps: true,
-      borderColor: '#AF5500',
-      backgroundColor: '#AF5500',
-      datalabels: {
-        align: 'end',
-        anchor: 'end'
-      }
-    });
-  }
-  if(filter.casesQuarantined.length>0) {
-    datasets2.push({
-      label: 'In Quarantäne',
-      data: filter.casesQuarantined,
-      fill: false,
-      cubicInterpolationMode: 'monotone',
-      spanGaps: true,
-      borderColor: '#3333AA',
-      backgroundColor: '#3333AA',
-      datalabels: {
-        align: 'end',
-        anchor: 'end'
-      }
-    });
-  }
+
+  // if(filter.casesIsolated.length>0) {
+  //   datasets2.push({
+  //     label: 'In Isolation',
+  //     data: filter.casesIsolated,
+  //     fill: false,
+  //     cubicInterpolationMode: 'monotone',
+  //     spanGaps: true,
+  //     borderColor: '#AF5500',
+  //     backgroundColor: '#AF5500',
+  //     datalabels: {
+  //       align: 'end',
+  //       anchor: 'end'
+  //     }
+  //   });
+  // }
+  // if(filter.casesQuarantined.length>0) {
+  //   datasets2.push({
+  //     label: 'In Quarantäne',
+  //     data: filter.casesQuarantined,
+  //     fill: false,
+  //     cubicInterpolationMode: 'monotone',
+  //     spanGaps: true,
+  //     borderColor: '#3333AA',
+  //     backgroundColor: '#3333AA',
+  //     datalabels: {
+  //       align: 'end',
+  //       anchor: 'end'
+  //     }
+  //   });
+  // }
   chartHosp = new Chart(canvas.id, {
     type: 'line',
     options: {
@@ -1710,7 +1999,7 @@ function barChartHospitalisations(place) {
     },
     data: {
       labels: filter.dateLabels,
-      datasets: datasets
+      datasets: filter.datasets
     }
   });
 
@@ -1766,9 +2055,11 @@ function barChartHospitalisations(place) {
     },
     data: {
       labels: filter.dateLabels,
-      datasets: datasets2
+      datasets: filter.datasets2
     }
   });
+
+  addHospFilterLengthButtons(canvas, 0, chartHosp, chartIso);
 }
 
 function getWeekScales() {
@@ -1797,39 +2088,6 @@ function getWeekScales() {
       ticks: {
         beginAtZero: true,
         suggestedMax: 4,
-      },
-      gridLines: {
-          color: inDarkMode() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
-      }
-    }]
-  };
-}
-
-function getScales() {
-  return {
-    xAxes: [{
-      type: 'time',
-      time: {
-        tooltipFormat: 'ddd DD.MM.YYYY',
-        unit: 'day',
-        displayFormats: {
-          day: 'DD.MM'
-        }
-      },
-      ticks: {
-        min: new Date("2020-05-31T23:00:00"),
-        max: new Date(),
-      },
-      gridLines: {
-          color: inDarkMode() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
-      }
-    }],
-    yAxes: [{
-      type: cartesianAxesTypes.LINEAR,
-      position: 'right',
-      ticks: {
-        beginAtZero: true,
-        suggestedMax: 10,
       },
       gridLines: {
           color: inDarkMode() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
@@ -2256,6 +2514,170 @@ var plzNames = {
 8954: "Geroldswil",
 8955: "Oetwil ad. L."
 };
+
+var dateNow = null;
+var daysBack = null;
+function getDateForMode(mode) {
+  if(dateNow==null) {
+    daysBack = getDeviceState()==2?20:50;
+    dateNow = new Date();
+    dateNow.setDate(dateNow.getDate()-daysBack);
+  }
+  switch(mode) {
+    case 0:
+      //return new Date("2020-02-24T23:00:00");
+      return new Date(Date.UTC(2020,1,25))
+    case 1:
+      //return new Date("2020-05-31T23:00:00");
+      return new Date(Date.UTC(2020,8,1))
+    case 2:
+      return dateNow;
+  }
+}
+
+function addDeathFilterLengthButtons(elementAfter, placenr, chart) {
+  var div = document.createElement('div');
+  div.className = "chartButtons";
+  var span = document.createElement("span");
+  addDeathFilterLengthButton(span, placenr, `Letzte ${daysBack} Tage`, 2, true, chart);
+  addDeathFilterLengthButton(span, placenr, 'Ab September', 1, false, chart);
+  addDeathFilterLengthButton(span, placenr, 'Ganz', 0, false, chart);
+  div.appendChild(span)
+  elementAfter.before(div);
+}
+
+function addDeathFilterLengthButton(container, placenr, name, mode, isActive, chart) {
+  var button = document.createElement('button');
+  button.className = "chartButton";
+  if (isActive) button.classList.add('active');
+  button.innerHTML = name;
+  button.addEventListener('click', function() {
+    this.classList.add('active');
+    getSiblings(this, '.chartButton.active').forEach(element => element.classList.remove('active'));
+    var filter = filterDeaths(placenr, mode);
+    if(chart!=null) {
+      chart.data.labels = filter.dateLabels;
+      chart.data.datasets[0].data = filter.diff;
+      chart.data.datasets[0].datalabels.display = (mode!=2) ? false : true;
+      chart.options.scales.xAxes[0].ticks.min = getDateForMode(mode);
+      chart.options.tooltips.callbacks = getCallbacks(filter);
+      chart.update(0);
+    }
+  });
+  container.append(button);
+}
+
+function addHospFilterLengthButtons(elementAfter, placenr, chartHosp, chartIso) {
+  var div = document.createElement('div');
+  div.className = "chartButtons";
+  var span = document.createElement("span");
+  addHospFilterLengthButton(span, placenr, `Letzte ${daysBack} Tage`, 2, true, chartHosp, chartIso);
+  addHospFilterLengthButton(span, placenr, 'Ab September', 1, false, chartHosp, chartIso);
+  addHospFilterLengthButton(span, placenr, 'Ganz', 0, false, chartHosp, chartIso);
+  div.appendChild(span)
+  elementAfter.before(div);
+}
+
+function addHospFilterLengthButton(container, placenr, name, mode, isActive, chartHosp, chartIso) {
+  var button = document.createElement('button');
+  button.className = "chartButton";
+  if (isActive) button.classList.add('active');
+  button.innerHTML = name;
+  button.addEventListener('click', function() {
+    this.classList.add('active');
+    getSiblings(this, '.chartButton.active').forEach(element => element.classList.remove('active'));
+    var filter = filterHosp(placenr, mode);
+    if(chartHosp!=null) {
+      chartHosp.data.labels = filter.dateLabels;
+      chartHosp.data.datasets = filter.datasets;
+      var pointRadius = mode==2?4:0;
+      chartHosp.data.datasets[0].pointRadius = pointRadius;
+      chartHosp.data.datasets[1].pointRadius = pointRadius;
+      chartHosp.data.datasets[2].pointRadius = pointRadius;
+      chartHosp.options.scales.xAxes[0].ticks.min = getDateForMode(mode);
+      chartHosp.update(0);
+    }
+    if(chartIso!=null) {
+      chartIso.data.labels = filter.dateLabels;
+      chartIso.data.datasets = filter.datasets2;
+      var pointRadius = mode==2?4:0;
+      chartIso.data.datasets[0].pointRadius = pointRadius;
+      chartIso.data.datasets[1].pointRadius = pointRadius;
+      chartIso.options.scales.xAxes[0].ticks.min = getDateForMode(mode);
+      chartIso.update(0);
+    }
+  });
+  container.append(button);
+}
+
+function addFilterLengthButtons(elementAfter, placenr, chart, chartHosp) {
+  var div = document.createElement('div');
+  div.className = "chartButtons";
+  var span = document.createElement("span");
+  addFilterLengthButton(span, placenr, 'Inz/100k', -1, false, chart, chartHosp, true);
+  addFilterLengthButton(span, placenr, `Letzte ${daysBack} Tage`, 2, true, chart, chartHosp, false);
+  addFilterLengthButton(span, placenr, 'Ab September', 1, false, chart, chartHosp, false);
+  addFilterLengthButton(span, placenr, 'Ganz', 0, false, chart, chartHosp, false);
+  div.appendChild(span)
+  elementAfter.before(div);
+}
+
+function addFilterLengthButton(container, placenr, name, mode, isActive, chart, chartHosp, isIncidenceButton) {
+  var button = document.createElement('button');
+  button.className = "chartButton";
+  if (isActive) button.classList.add('active');
+  button.innerHTML = name;
+  button.addEventListener('click', function() {
+    if(isIncidenceButton) {
+      if(this.classList.contains('active')) {
+        this.classList.remove('active');
+        chart.showIncidences = false;
+      }
+      else {
+        this.classList.add('active');
+        chart.showIncidences = true;
+      }
+    }
+    else {
+      this.classList.add('active');
+      getSiblings(this, '.chartButton.active').forEach(element => element.classList.remove('active'));
+    }
+    if(mode==-1) {
+      chart.mode = chart.mode!=undefined?chart.mode:2;
+    }
+    else {
+      chart.mode = mode;
+    }
+    var filter = filterCases(placenr, chart.mode);
+    chart.data.labels = filter.dateLabels;
+    var pointBackgroundColor = filter.incidences.map(function (d) { return (d<60)?"green":(d>=120?"red":"orange");});
+    chart.data.datasets[0].data = chart.showIncidences?filter.incidences:filter.avgs;
+    chart.data.datasets[0].label = chart.showIncidences?'Inz/100k':'7d-Avg';
+    chart.data.datasets[0].pointBackgroundColor = pointBackgroundColor;
+    chart.data.datasets[0].pointBorderColor = pointBackgroundColor;
+    chart.data.datasets[0].pointRadius = chart.showIncidences?(chart.mode!=2?1:4):0;
+    chart.data.datasets[1].data = chart.showIncidences?null:filter.diff;
+    chart.options.title.text = chart.showIncidences?'Inzidenz per 100k über die letzten 14 Tage':'Bestätigte Fälle';
+    chart.data.datasets[1].datalabels.display = (chart.mode!=2) ? false : true; //{ display: true, color: inDarkMode() ? '#ccc' : 'black', font: { weight: 'bold'} };
+    chart.options.scales.xAxes[0].ticks.min = getDateForMode(mode);
+    chart.options.tooltips.callbacks = getCallbacks(filter);
+    chart.update(0);
+
+    if(chartHosp!=null) {
+    chartHosp.data.labels = filter.dateLabels;
+    chartHosp.data.datasets = filter.datasets;
+    chartHosp.options.scales.xAxes[0].ticks.min = getDateForMode(mode);
+    chartHosp.update(0);
+    }
+  });
+  if(isIncidenceButton) {
+    var span = document.createElement('span');
+    span.append(button);
+    container.append(span);
+  }
+  else
+    container.append(button);
+}
 
 function includeHTML() {
   var z, i, elmnt, file, xhttp;

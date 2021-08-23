@@ -280,7 +280,7 @@ table {
 .tableFixHead          {
   overflow-y: auto;
   height: 350px;
-  width: 350px;
+  /* width: 350px; */
   float: right;
 }
 .tableFixHead thead th { position: sticky; top: 0; background-color: var(--color-background); border-top-width: 0; }

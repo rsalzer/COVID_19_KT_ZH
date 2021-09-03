@@ -85,6 +85,7 @@ document.getElementById("loaded").style.display = 'none';
 includeHTML();
 getPLZ();
 getCantonZH();
+getTests();
 getBezirke();
 getSpitalAuslastung();
 //getAge();
@@ -99,6 +100,13 @@ function getCantonZH() {
     barChartHospitalisations();
     document.getElementById("loadingspinner").style.display = 'none';
     document.getElementById("loaded").style.display = 'block';
+  });
+}
+
+function getTests() {
+  var url = 'https://raw.githubusercontent.com/openZH/covid_19/master/fallzahlen_kanton_zh/COVID19_Anteil_positiver_Test_pro_KW.csv';
+  d3.csv(url, function(error, csvdata) {
+    chartTests(csvdata);
   });
 }
 
@@ -405,6 +413,9 @@ function parseSpitalHistory() {
     });
   }
   let auslastung = spitalHistory.map(d=>d.totalAuslastung);
+  var covidAuslastung = spitalHistory.map(d=> {
+    return Math.round(d.totalCovid*100/d.totalCapacity);
+  });
   var dateLabels = spitalHistory.map(function(d) {
     var dateSplit = d.date.split("-");
     var day = parseInt(dateSplit[2]);
@@ -422,7 +433,16 @@ function parseSpitalHistory() {
       spanGaps: true,
       borderColor: '#CCCC00',
       backgroundColor: '#CCCC00'
-    });
+  });
+  datasets.push({
+      label: 'Auslastung durch Covid in %',
+      data: covidAuslastung,
+      fill: false,
+      cubicInterpolationMode: 'monotone',
+      spanGaps: true,
+      borderColor: '#CC0000',
+      backgroundColor: '#CC0000'
+  });
   let chartSpital = new Chart("spitalcanvas", {
     type: 'line',
     options: {
@@ -758,7 +778,7 @@ function lastBezirksData(data) {
   var table = document.getElementById("confirmed_1");
   for(var i=101; i<=112; i++) {
     var filtered = data.filter(function(d) { if(d.DistrictId==i) return d});
-    console.log(filtered);
+    //console.log(filtered);
     var last = filtered[filtered.length-1];
 
     if(i==101) {
@@ -1585,6 +1605,136 @@ function barChartZHDeaths(data) {
   addDeathFilterLengthButtons(canvas, 0, chart);
 }
 
+function chartTests(data) {
+  var div = document.getElementById("container_test");
+  var canvas = document.createElement("canvas");
+  canvas.id = "testscanvas";
+  canvas.height=300;
+  div.appendChild(canvas);
+  div.scrollLeft = 1700;
+  var datasets = [];
+  var labels;
+  var labels = data.map(function(d) {
+    var start = d.Woche_von;
+    var dateSplit = start.split("-");
+    var day = parseInt(dateSplit[2]);
+    var month = parseInt(dateSplit[1])-1;
+    var year = parseInt(dateSplit[0]);
+    var startDate = new Date(year,month,day);
+
+    var end = d.Woche_bis;
+    var dateSplit = end.split("-");
+    var day = parseInt(dateSplit[2]);
+    var month = parseInt(dateSplit[1])-1;
+    var year = parseInt(dateSplit[0]);
+    var endDate = new Date(year,month,day);
+
+    return /*`Woche ${week}:*/ `${formatDate(startDate)} - ${formatDate(endDate)}`;
+  });
+  var totalTests = data.map(function(d) {
+    return parseInt(d.Anzahl_positiv)+parseInt(d.Anzahl_negativ);
+  });
+  var positivity = data.map(function(d) {
+    return d.Anteil_positiv;
+  });
+
+  var chart = new Chart(canvas.id, {
+      type: 'bar',
+      options: {
+        layout: {
+            padding: {
+                right: 20
+            }
+        },
+        responsive: false,
+        legend: {
+          display: false
+        },
+        title: {
+          display: true,
+          text: 'Tests / Positivtätsrate'
+        },
+        tooltips: {
+          mode: 'index',
+          intersect: false,
+          bodyFontFamily: 'IBM Plex Mono',
+          //callbacks: getCallbacks(filter),
+        },
+        scales: {
+          xAxes: [{
+            /*type: 'time',
+            time: {
+              tooltipFormat: 'DD.MM.YYYY',
+              unit: 'day',
+              displayFormats: {
+                day: 'DD.MM'
+              }
+            },*/
+            ticks: {
+              minRotation: 45
+            },
+
+            gridLines: {
+                color: inDarkMode() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
+            }
+
+          }],
+          yAxes: [{
+            id: 'tests',
+            type: 'linear',
+            position: 'left',
+            ticks: {
+              beginAtZero: true,
+            },
+            gridLines: {
+                color: inDarkMode() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
+            }
+          },
+          {
+            id: 'positivity',
+            type: 'linear',
+            position: 'right',
+            gridLines: false,
+            ticks: {
+              beginAtZero: true
+            }
+          }]
+        },
+        plugins: {
+          datalabels: false
+        }
+    },
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Positivätsrate',
+          data: positivity,
+          cubicInterpolationMode: 'monotone',
+          spanGaps: true,
+          pointRadius: 0,
+          borderWidth: 2,
+          borderColor: '#F15F36',
+          backgroundColor: '#F15F36',
+          fill: false,
+          type: 'line',
+          yAxisID: 'positivity',
+        },
+        {
+          label: 'Anzahl Tests',
+          data: totalTests,
+          fill: false,
+          cubicInterpolationMode: 'monotone',
+          spanGaps: true,
+          borderColor: '#5F36F1',
+          backgroundColor: '#5F36F1',
+          yAxisID: 'tests'
+        }
+      ]
+    }
+  });
+}
+
 function chartBezirke(data, absolute) {
   var place = "bezirke";
   if(!absolute) place += "relativ";
@@ -1635,9 +1785,16 @@ function chartBezirke(data, absolute) {
     else {
       var cases = filtered.map(function(d) {return Math.round(d.TotalConfCases / d.Population * 10000 *1000) / 1000});
     }
+    var diffs = [];
+    cases.forEach((item, i) => {
+      var last = 0;
+      if(i!=0) last = cases[i-1];
+      var diff = Math.round((item-last)*100)/100;
+      diffs.push(diff);
+    });
     datasets.push({
       label: names[i],
-      data: cases,
+      data: diffs,
       fill: false,
       cubicInterpolationMode: 'monotone',
       spanGaps: true,
@@ -1688,6 +1845,7 @@ function chartBezirke(data, absolute) {
                 if(Number.isNaN(change)) changeStr = "";
             }
             var tabbing = 8-value.length;
+            if(tabbing<0) tabbing = 0;
             var padding = " ".repeat(tabbing);
             if(!absolute) changeStr = "";
             return title+titlepadding+value+padding+changeStr;
@@ -1737,9 +1895,16 @@ function chartBezirkeDeaths(data, absolute) {
     else {
       var cases = filtered.map(function(d) {return Math.round(d.TotalDeaths / d.Population * 10000 *1000) / 1000});
     }
+    var diffs = [];
+    cases.forEach((item, i) => {
+      var last = 0;
+      if(i!=0) last = cases[i-1];
+      var diff = Math.round((item-last)*100)/100;
+      diffs.push(diff);
+    });
     datasets.push({
       label: names[i],
-      data: cases,
+      data: diffs,
       fill: false,
       cubicInterpolationMode: 'monotone',
       spanGaps: true,
@@ -1789,7 +1954,7 @@ function chartBezirkeDeaths(data, absolute) {
                 changeStr = " ("+label+")";
                 if(Number.isNaN(change)) changeStr = "";
             }
-            var tabbing = 5-value.length;
+            var tabbing = 6-value.length;
             var padding = " ".repeat(tabbing);
             if(!absolute) changeStr = "";
             return title+titlepadding+value+padding+changeStr;
@@ -2077,7 +2242,7 @@ function getWeekScales() {
       position: 'right',
       ticks: {
         beginAtZero: true,
-        suggestedMax: 4,
+        suggestedMax: 2,
       },
       gridLines: {
           color: inDarkMode() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'

@@ -1240,7 +1240,7 @@ function filterDeaths(placenr, mode) {
   var deaths = moreFilteredData.map(d => d.ncumul_deceased);
   var diff = moreFilteredData.map(d => d.diff_ncumul_deceased);
   return {
-    "deaths": deaths,
+    "cases": deaths,
     "dateLabels": dateLabels,
     "diff": diff
   }
@@ -1438,7 +1438,7 @@ function barChartCases() {
 addFilterLengthButtons(canvas, 0, chart, null);
 }
 
-function getCallbacks(filter) {
+function getCallbacks(filter, isDeath) {
   return {
     title: function(tooltipItems, data) {
       var str = tooltipItems[0].label;
@@ -1452,10 +1452,11 @@ function getCallbacks(filter) {
       return str;
     },
     afterLabel: function(tooltipItems, data) {
-      if(tooltipItems.datasetIndex==0) return "";
+      if(tooltipItems.datasetIndex==0 && !isDeath) return "";
       var index = tooltipItems.index;
       var value = filter.cases[index];
-      return "Total : "+value;
+      var padding = isDeath?"    ":"";
+      return "Total "+padding+": "+value;
     }
   };
 }
@@ -1518,15 +1519,15 @@ function getDataLabels() {
 
 function barChartZHDeaths(data) {
   var place = "ZH";
-  var filteredData = filterDeaths(0,2);
+  var filter = filterDeaths(0,2);
   var div = document.getElementById("container_"+place);
   var canvas = document.createElement("canvas");
   canvas.id = "death"+place;
   canvas.height=250;
   div.appendChild(canvas);
   div.scrollLeft = 2300;
-  var cases = filteredData.deaths;
-  var diff = filteredData.diff;
+  var cases = filter.cases;
+  var diff = filter.diff;
   var chart = new Chart(canvas.id, {
       type: 'bar',
       options: {
@@ -1547,19 +1548,7 @@ function barChartZHDeaths(data) {
           mode: 'index',
           intersect: false,
           bodyFontFamily: 'IBM Plex Mono',
-          callbacks: {
-            label: function(tooltipItems, data) {
-              var index = tooltipItems.index;
-              var value = cases[index];
-              var changeStr = "";
-              if(index>0) {
-                  var change = parseInt(value)-parseInt(cases[index-1]);
-                  var label = change>0 ? "+"+change : change;
-                  changeStr = " ("+label+")";
-              }
-              return value+changeStr;
-            }
-          }
+          callbacks: getCallbacks(filter, true)
         },
         scales: getScales(),
         plugins: {
@@ -1573,9 +1562,10 @@ function barChartZHDeaths(data) {
         }
     },
     data: {
-      labels: filteredData.dateLabels,
+      labels: filter.dateLabels,
       datasets: [
         {
+          label: 'Todesfälle',
           data: diff,
           fill: false,
           cubicInterpolationMode: 'monotone',
@@ -2560,7 +2550,7 @@ function addDeathFilterLengthButton(container, placenr, name, mode, isActive, ch
       chart.data.datasets[0].data = filter.diff;
       chart.data.datasets[0].datalabels.display = (mode!=2) ? false : true;
       chart.options.scales.xAxes[0].ticks.min = getDateForMode(mode);
-      chart.options.tooltips.callbacks = getCallbacks(filter);
+      chart.options.tooltips.callbacks = getCallbacks(filter, true);
       chart.update(0);
     }
   });

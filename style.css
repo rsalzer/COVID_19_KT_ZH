@@ -590,6 +590,26 @@ button {
 .chartButton:focus {
     outline: none;
 }
+@media (max-width: 660px) {
+	canvas {
+	  width: 100%;
+		min-width: 0px;
+	}
+	.chartButtons {
+		overflow-x: scroll;
+		min-width: 0px;
+		width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+	}
+  .chartButton:hover {
+  	border-bottom: 2px solid transparent;
+  }
+  .chartButton:focus {
+  	border-bottom: 2px solid transparent;
+  }
+}
 .chartButton.active {
     cursor: default;
 	border-bottom: 2px solid #000;

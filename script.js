@@ -136,7 +136,15 @@ function getPLZ() {
       plzdata = csvdata;
       plzgeojson = topo;
       drawPLZTable();
+      getVaccination();
     });
+}
+
+function getVaccination() {
+  var url = 'https://raw.githubusercontent.com/openZH/covid_19_vaccination_campaign_ZH/master/COVID19_Impfungen_pro_Woche_PLZ.csv';
+  d3.csv(url, function(error, csvdata) {
+      drawVaccTable(csvdata);
+  });
 }
 
 
@@ -948,6 +956,110 @@ function mouseOutHandlerPLZ(mode) {
     if(tr!=null) tr.className = "";
     if(document.getElementById("plzchange"+d.properties.PLZ)) document.getElementById("plzchange"+d.properties.PLZ).className = "";
   }
+}
+
+function drawVaccTable(vaccdata) {
+  var tbody = document.getElementById("vaccbody");
+  var untilDate = vaccdata[vaccdata.length-1].week_until;
+  var dateSplit = untilDate.split("-");
+  var day = parseInt(dateSplit[2]);
+  var month = parseInt(dateSplit[1])-1;
+  var year = parseInt(dateSplit[0]);
+  var h3 = document.getElementById("lastVaccSubtitle");
+  h3.innerHTML = h3.innerHTML + " " + day+"."+(month+1)+"."+year;
+  var filteredPLZData = vaccdata.filter(function(d) { if(d.week_until==untilDate) return d});
+  for(var i=0; i<filteredPLZData.length; i++) {
+    var singlePLZ = filteredPLZData[i];
+    var plz = ""+singlePLZ.plz;
+    var tr = document.createElement("tr");
+    tr.id = "vaccplz"+plz;
+    let population = parseInt(singlePLZ.population); //.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "’");
+    let firstVacc = parseInt(singlePLZ.ncumul_firstvacc);
+    let secondVacc = parseInt(singlePLZ.ncumul_secondvacc);
+    let percentFirstVacc = Math.round(firstVacc*1000/population)/10+"%";
+    let percentSecondVacc = Math.round(secondVacc*1000/population)/10+"%";
+    singlePLZ.percentFirstVacc = Math.round(firstVacc*1000/population)/10;
+    var name = plzNames[plz];
+    if(name==undefined) {
+      name = plz;
+      plz = "";
+      percentFirstVacc = firstVacc;
+      percentSecondVacc = secondVacc;
+    }
+    tr.innerHTML = "<td>"+plz+"</td><td>"+name+"</td><td>"+percentFirstVacc+"</td><td>"+percentSecondVacc+"</td>";
+    //tr.onclick = clickElement;
+    tbody.append(tr);
+  }
+  drawVacc(filteredPLZData,plzgeojson);
+}
+
+function mouseOverHandlerVacc(d, i) {
+  if(d.properties.Ortschaftsname=="See") return;
+  //d3.select(this).attr("fill", "#5592ED");
+  var tr = document.getElementById("vaccplz"+d.properties.PLZ);
+  var div = document.getElementById("vaccdiv");
+  if(tr!=null) {
+    tr.className = "active";
+    if(scroll) div.scrollTop = tr.offsetTop-175;
+  }
+}
+
+function mouseOutHandlerVacc(d, i) {
+    //d3.select(this).attr("fill", getColor(mode));
+    var tr = document.getElementById("vaccplz"+d.properties.PLZ);
+    if(tr!=null) tr.className = "";
+}
+
+function drawVacc(csvdata,topodata, mode) {
+  var svg = d3.select("#vaccsvg"),//.style("background-color", 'red'),
+      width = +svg.attr("width"),
+      height = +svg.attr("height");
+    svg.selectAll("*").remove();
+  var smaller = width<height ? width : height;
+  const projection = d3.geoMercator()
+      .center([8.675, 47.43])                // GPS of location to zoom on
+      .scale(40000*(smaller/600))                       // This is like the zoom
+      .translate([ width/2, height/2 ])
+  const path = d3.geoPath().projection(projection);
+
+    // Draw the map
+  svg.append("g")
+      .selectAll("path")
+      .data(topodata.features)
+      .enter()
+      .append("path")
+      .attr("d", path)
+      .attr("id", function(d,i) {
+        var plz = ""+d.properties.PLZ;
+        return "svgvacc"+plz;
+      })
+      .style("stroke", "white")
+      .attr('fill', getVaccColor(csvdata))
+      .on("mouseover", mouseOverHandlerVacc)
+      .on("mouseout", mouseOutHandlerVacc);
+};
+
+function getVaccColor(csvdata) {
+  return function (d, i) {
+      var plz = ""+d.properties.PLZ;
+      if(d.properties.Ortschaftsname=="See") return "blue";
+      var filtered = csvdata.filter(function(d) { if(d.plz==plz) return d});
+      if(filtered.length>0) { // &&
+          var cases = filtered[filtered.length-1].percentFirstVacc;
+          if(cases<30) return colors3[10];
+          else if(cases<35) return colors4[9];
+          else if(cases<40) return colors4[8];
+          else if(cases<45) return colors4[7];
+          else if(cases<55) return colors4[6];
+          else if(cases<60) return colors4[5];
+          else if(cases<65) return colors4[4];
+          else if(cases<70) return colors4[3];
+          else if(cases<75) return colors4[2];
+          else if(cases<80) return colors4[1];
+          else return "#008000"; //>21
+      }
+      return "grey";
+    }
 }
 
 var whichclicked = "";

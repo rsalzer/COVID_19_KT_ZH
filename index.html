@@ -64,23 +64,6 @@
       </article>
         <article>
           <h3 id="lastPLZTitle">Neue Fälle nach PLZ über die letzten 7/14 Tage</h3>
-          <!-- <h4>Änderungen</h4>
-          <div class="table-group">
-            <table id="plzchangestable">
-              <thead>
-                <tr>
-                  <th>PLZ</th>
-                  <th>Ort</th>
-                  <th id="yday">Gestern</th>
-                  <th id="tday">Heute</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="plzchangesbody">
-
-              </tbody>
-            </table>
-          </div> -->
           <h4 id="lastPLZSubtitle">Rückwirkend vom </h4>
           <div class="svgButtons">
             <button class="chartButton active" id="incbutton">Inzidenz</button>
@@ -122,6 +105,32 @@
             <p>
               Für die Inzidenz-Karte wird der tiefere Wert der Prävalenzstufe angenommen. Die tatsächliche Inzidenz kann höher liegen, speziell in Postleitzahlkreisen mit wenig Einwohner'innen.
             </p>
+          </div>
+        </article>
+        <article>
+          <h3 id="vaccTitle">Geimpfte Personen in % der Bevölkerung</h3>
+          <h4 id="lastVaccSubtitle">Bis zum </h4>
+          <div class="svgButtons">
+            <!-- <button class="chartButton active" id="incbutton">Inzidenz</button>
+            <button class="chartButton" id="absbutton">Absolut</button> -->
+          </div>
+          <div class="svg-group">
+            <svg id="vaccsvg" width="350" height="350"></svg>
+            <div class="tableFixHead" id="vaccdiv">
+              <table id="vacctable" class="tableFixHead">
+                <thead>
+                  <tr id="vaccheadtr">
+                    <th>PLZ</th>
+                    <th>Ort</th>
+                    <th>1 Impfung</th>
+                    <th>2 Impfungen</th>
+                  </tr>
+                </thead>
+                <tbody id="vaccbody">
+
+                </tbody>
+              </table>
+            </div>
           </div>
         </article>
         <!-- <article id="age">

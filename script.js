@@ -983,12 +983,13 @@ function drawVaccTable(vaccdata) {
     singlePLZ.percentFirstVacc = Math.round(firstVacc*1000/population)/10;
     var name = plzNames[plz];
     if(name==undefined) {
-      name = plz;
-      plz = "";
       percentFirstVacc = firstVacc;
       percentSecondVacc = secondVacc;
+      plz = plz.replace("ZH aber ","");
+      tr.innerHTML = "<td colspan=\"2\">"+plz+"</td><td style=\"text-align:right\">"+percentFirstVacc+"</td><td>"+percentSecondVacc+"</td>";
     }
-    tr.innerHTML = "<td>"+plz+"</td><td>"+name+"</td><td>"+percentFirstVacc+"</td><td>"+percentSecondVacc+"</td>";
+    else
+      tr.innerHTML = "<td>"+plz+"</td><td>"+name+"</td><td>"+percentFirstVacc+"</td><td>"+percentSecondVacc+"</td>";
     //tr.onclick = clickElement;
     tbody.append(tr);
   }

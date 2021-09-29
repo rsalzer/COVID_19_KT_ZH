@@ -867,8 +867,8 @@ function drawPLZ(csvdata,topodata, mode) {
     svg.selectAll("*").remove();
   var smaller = width<height ? width : height;
   const projection = d3.geoMercator()
-      .center([8.675, 47.43])                // GPS of location to zoom on
-      .scale(40000*(smaller/600))                       // This is like the zoom
+      .center([8.675, 47.425])                // GPS of location to zoom on
+      .scale(43000*(smaller/600))                       // This is like the zoom
       .translate([ width/2, height/2 ])
   const path = d3.geoPath().projection(projection);
 
@@ -1020,8 +1020,8 @@ function drawVacc(csvdata,topodata, mode) {
     svg.selectAll("*").remove();
   var smaller = width<height ? width : height;
   const projection = d3.geoMercator()
-      .center([8.675, 47.43])                // GPS of location to zoom on
-      .scale(40000*(smaller/600))                       // This is like the zoom
+      .center([8.675, 47.425])                // GPS of location to zoom on
+      .scale(43000*(smaller/600))                       // This is like the zoom
       .translate([ width/2, height/2 ])
   const path = d3.geoPath().projection(projection);
 

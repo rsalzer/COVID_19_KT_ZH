@@ -370,7 +370,7 @@ function parseSpital(date) {
   if(date==null) {
     date = spitaldata[spitaldata.length-1].date;
   }
-  var lastData = spitaldata.filter(d=>d.date==date);
+  var lastData = spitaldata.filter(d=>d.date==date && d.current_icu_service_certified!="");
   var mode = "current_icu_service_certified";
   var sortedLastData = Array.from(lastData).sort(function(a, b){return b[mode]-a[mode]});
   if(lastData.length==0) return;

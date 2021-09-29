@@ -958,7 +958,9 @@ function mouseOutHandlerPLZ(mode) {
   }
 }
 
+var vaccData;
 function drawVaccTable(vaccdata) {
+  vaccData = vaccdata;
   var tbody = document.getElementById("vaccbody");
   var untilDate = vaccdata[vaccdata.length-1].week_until;
   var dateSplit = untilDate.split("-");
@@ -995,7 +997,7 @@ function drawVaccTable(vaccdata) {
 
 function mouseOverHandlerVacc(d, i) {
   if(d.properties.Ortschaftsname=="See") return;
-  //d3.select(this).attr("fill", "#5592ED");
+  d3.select(this).attr("fill", "#5592ED");
   var tr = document.getElementById("vaccplz"+d.properties.PLZ);
   var div = document.getElementById("vaccdiv");
   if(tr!=null) {
@@ -1005,7 +1007,7 @@ function mouseOverHandlerVacc(d, i) {
 }
 
 function mouseOutHandlerVacc(d, i) {
-    //d3.select(this).attr("fill", getColor(mode));
+    d3.select(this).attr("fill", getVaccColor());
     var tr = document.getElementById("vaccplz"+d.properties.PLZ);
     if(tr!=null) tr.className = "";
 }
@@ -1034,16 +1036,16 @@ function drawVacc(csvdata,topodata, mode) {
         return "svgvacc"+plz;
       })
       .style("stroke", "white")
-      .attr('fill', getVaccColor(csvdata))
+      .attr('fill', getVaccColor())
       .on("mouseover", mouseOverHandlerVacc)
       .on("mouseout", mouseOutHandlerVacc);
 };
 
-function getVaccColor(csvdata) {
+function getVaccColor() {
   return function (d, i) {
       var plz = ""+d.properties.PLZ;
       if(d.properties.Ortschaftsname=="See") return "blue";
-      var filtered = csvdata.filter(function(d) { if(d.plz==plz) return d});
+      var filtered = vaccData.filter(function(d) { if(d.plz==plz) return d});
       if(filtered.length>0) { // &&
           var cases = filtered[filtered.length-1].percentFirstVacc;
           if(cases<30) return colors3[10];

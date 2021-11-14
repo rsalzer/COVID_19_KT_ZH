@@ -240,7 +240,7 @@ function prepareData() {
               var diff7Days = cantonTotal.ncumul_conf - dataPerDay[dataPerDay.length-7].data[i].ncumul_conf;
               cantonTotal.diffAvg7Days = Math.round(diff7Days / 7);
               if(dataPerDay.length>15) {
-                var diff14Days = cantonTotal.ncumul_conf - dataPerDay[dataPerDay.length-14].data[i].ncumul_conf;
+                var diff14Days = cantonTotal.ncumul_conf - dataPerDay[dataPerDay.length-15].data[i].ncumul_conf;
                 cantonTotal.incidences14Days = Math.round(diff14Days / population[canton] * 100000);
               }
             }
@@ -440,7 +440,9 @@ function parseSpitalHistory() {
       cubicInterpolationMode: 'monotone',
       spanGaps: true,
       borderColor: '#CCCC00',
-      backgroundColor: '#CCCC00'
+      backgroundColor: '#CCCC00',
+      pointRadius: 0,
+      hoverRadius: 5
   });
   datasets.push({
       label: 'Auslastung durch Covid in %',
@@ -449,7 +451,9 @@ function parseSpitalHistory() {
       cubicInterpolationMode: 'monotone',
       spanGaps: true,
       borderColor: '#CC0000',
-      backgroundColor: '#CC0000'
+      backgroundColor: '#CC0000',
+      pointRadius: 0,
+      hoverRadius: 5
   });
   let chartSpital = new Chart("spitalcanvas", {
     type: 'line',
@@ -495,6 +499,14 @@ function parseSpitalHistory() {
               color: inDarkMode() ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
           }
         }]
+      },
+      tooltips: {
+        mode: 'index',
+        intersect: false
+      },
+      hover: {
+        mode: 'index',
+        intersect: false
       },
       plugins: {
         datalabels: false

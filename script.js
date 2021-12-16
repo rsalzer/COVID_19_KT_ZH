@@ -384,18 +384,38 @@ function parseSpital(date) {
     var tr = document.createElement("tr");
     var total = parseInt(row.current_icu_covid)+parseInt(row.current_icu_not_covid);
     var auslastung = Math.round(total * 100 / parseInt(row.current_icu_service_certified));
-    tr.innerHTML="<td>"+row.hospital_name+"</td><td>"+row.current_icu_covid+"</td><td>"+row.current_icu_not_covid+"</td><td>"+total+"</td><td>"+row.current_icu_service_certified+"</td><td>"+auslastung+"%</td>";
+    var auslastungMitPersonal = null
+    if(row.current_icu_service_certified_operated!=null && row.current_icu_service_certified_operated!="") {
+      auslastungMitPersonal = Math.round(total * 100 / parseInt(row.current_icu_service_certified_operated));
+    }
+    var inner = "<td>"+row.hospital_name+"</td><td>"+row.current_icu_covid+"</td><td>"+row.current_icu_not_covid+"</td><td>"+total+"</td><td>"+row.current_icu_service_certified+"</td><td>"+auslastung+"%</td>";
+    if(auslastungMitPersonal!=null) {
+      inner += "<td>"+row.current_icu_service_certified_operated+"</td><td>"+auslastungMitPersonal+"%</td>";
+    }
+    else {
+      inner += "<td></td><td></td>";
+    }
+    tr.innerHTML = inner;
     table.appendChild(tr);
   }
 
   var totalCovid = lastData.reduce( (prev, curr) => prev+parseInt(curr.current_icu_covid), 0);
   var totalNonCovid = lastData.reduce( (prev, curr) => prev+parseInt(curr.current_icu_not_covid), 0);
   var totalCapacity = lastData.reduce( (prev, curr) => prev+parseInt(curr.current_icu_service_certified), 0);
+  var totalCapacityCertified = lastData.reduce( (prev, curr) => prev+parseInt(curr.current_icu_service_certified_operated), 0);
   var totalBoth = totalCovid+totalNonCovid;
   var totalAuslastung = Math.round(totalBoth * 100 / totalCapacity);
   //console.log(totalCovid);
   var tr = document.createElement("tr");
-  tr.innerHTML = "<td><b>TOTAL</b></td><td><b>"+totalCovid+"</b></td><td><b>"+totalNonCovid+"</b></td><td><b>"+totalBoth+"</b></td><td><b>"+totalCapacity+"</b></td><td><b>"+totalAuslastung+"%</b></td>";
+  var totalString = "<td><b>TOTAL</b></td><td><b>"+totalCovid+"</b></td><td><b>"+totalNonCovid+"</b></td><td><b>"+totalBoth+"</b></td><td><b>"+totalCapacity+"</b></td><td><b>"+totalAuslastung+"%</b></td>";
+  if(!isNaN(totalCapacityCertified)) {
+    var totalAuslastungCertified = Math.round(totalBoth * 100 / totalCapacityCertified);
+    totalString += "<td><b>"+totalCapacityCertified+"</b></td><td><b>"+totalAuslastungCertified+"%</b></td>";
+  }
+  else {
+    totalString += "<td></td><td></td>";
+  }
+  tr.innerHTML = totalString;
   table.appendChild(tr);
 }
 
@@ -409,20 +429,38 @@ function parseSpitalHistory() {
     var totalCovid = dataForDate.reduce( (prev, curr) => prev+parseInt(curr.current_icu_covid), 0);
     var totalNonCovid = dataForDate.reduce( (prev, curr) => prev+parseInt(curr.current_icu_not_covid), 0);
     var totalCapacity = dataForDate.reduce( (prev, curr) => prev+parseInt(curr.current_icu_service_certified), 0);
+    var totalCapacityCertified = dataForDate.reduce( (prev, curr) => prev+parseInt(curr.current_icu_service_certified_operated), 0);
     var totalBoth = totalCovid+totalNonCovid;
     var totalAuslastung = Math.round(totalBoth * 100 / totalCapacity);
+    var totalAuslastungCertified = null;
+    if(!isNaN(totalCapacityCertified)) {
+      totalAuslastungCertified = Math.round(totalBoth * 100 / totalCapacityCertified);
+    }
+    else {
+      totalCapacityCertified = null;
+      // totalAuslastungCertified = Math.round(totalBoth * 100 / 193);
+      // if(totalAuslastungCertified>100) totalAuslastungCertified = 100;
+    }
     spitalHistory.push({
       date: singleDate,
       totalCovid: totalCovid,
       totalNonCovid: totalNonCovid,
       totalCapacity: totalCapacity,
+      totalCapacityCertified: totalCapacityCertified,
       totalBoth: totalBoth,
-      totalAuslastung: totalAuslastung
+      totalAuslastung: totalAuslastung,
+      totalAuslastungCertified: totalAuslastungCertified
     });
   }
+  //spitalHistory.splice(0,spitalHistory.length-60);
   let auslastung = spitalHistory.map(d=>d.totalAuslastung);
+  let certifiedAuslastung = spitalHistory.map(d=>d.totalAuslastungCertified);
   var covidAuslastung = spitalHistory.map(d=> {
     return Math.round(d.totalCovid*100/d.totalCapacity);
+  });
+  var covidAuslastungInBetrieb = spitalHistory.map(d=> {
+    if(d.totalAuslastungCertified==null) return null;
+    return Math.round(d.totalCovid*100/d.totalCapacityCertified);
   });
   var dateLabels = spitalHistory.map(function(d) {
     var dateSplit = d.date.split("-");
@@ -434,7 +472,18 @@ function parseSpitalHistory() {
   });
   let datasets = [];
   datasets.push({
-      label: 'Auslastung in %',
+      label: 'Auslastung in Betrieb (in %)',
+      data: certifiedAuslastung,
+      fill: false,
+      cubicInterpolationMode: 'monotone',
+      spanGaps: true,
+      borderColor: '#ff8800',
+      backgroundColor: '#ff8800',
+      pointRadius: 0,
+      hoverRadius: 5
+  });
+  datasets.push({
+      label: 'Auslastung (in %)',
       data: auslastung,
       fill: false,
       cubicInterpolationMode: 'monotone',
@@ -445,7 +494,18 @@ function parseSpitalHistory() {
       hoverRadius: 5
   });
   datasets.push({
-      label: 'Auslastung durch Covid in %',
+      label: 'Auslastung durch Covid in Betrieb (in %)',
+      data: covidAuslastungInBetrieb,
+      fill: false,
+      cubicInterpolationMode: 'monotone',
+      spanGaps: true,
+      borderColor: '#CC8800',
+      backgroundColor: '#CC8800',
+      pointRadius: 0,
+      hoverRadius: 5
+  });
+  datasets.push({
+      label: 'Auslastung durch Covid (in %)',
       data: covidAuslastung,
       fill: false,
       cubicInterpolationMode: 'monotone',

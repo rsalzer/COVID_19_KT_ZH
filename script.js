@@ -388,7 +388,9 @@ function parseSpital(date) {
     if(row.current_icu_service_certified_operated!=null && row.current_icu_service_certified_operated!="") {
       auslastungMitPersonal = Math.round(total * 100 / parseInt(row.current_icu_service_certified_operated));
     }
-    var inner = "<td>"+row.hospital_name+"</td><td>"+row.current_icu_covid+"</td><td>"+row.current_icu_not_covid+"</td><td>"+total+"</td><td>"+row.current_icu_service_certified+"</td><td>"+auslastung+"%</td>";
+    var hospName = row.hospital_name;
+    hospName = hospName.replace("UniversitätsSpital Zürich", "Unispital ZH").replace("Zürich", "ZH").replace("Hirslanden Klinik Hirslanden", "Klinik Hirslanden").replace("Hirslanden Klinik im Park", "Klinik im Park").replace("Kantonsspital", "").replace("See-Spital", "").replace("Universitätsklinik", "");
+    var inner = "<td>"+hospName+"</td><td>"+row.current_icu_covid+"</td><td>"+row.current_icu_not_covid+"</td><td>"+total+"</td><td>"+row.current_icu_service_certified+"</td><td>"+auslastung+"%</td>";
     if(auslastungMitPersonal!=null) {
       inner += "<td>"+row.current_icu_service_certified_operated+"</td><td>"+auslastungMitPersonal+"%</td>";
     }

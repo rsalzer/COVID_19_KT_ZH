@@ -141,7 +141,7 @@ function getPLZ() {
 }
 
 function getVaccination() {
-  var url = 'https://raw.githubusercontent.com/openZH/covid_19_vaccination_campaign_ZH/master/COVID19_Impfungen_pro_Woche_PLZ.csv';
+  var url = 'https://raw.githubusercontent.com/openZH/covid_19_vaccination_campaign_ZH/master/COVID19_Impfungen_pro_Woche_PLZ_v2.csv';
   d3.csv(url, function(error, csvdata) {
       drawVaccTable(csvdata);
   });
@@ -1042,30 +1042,46 @@ function drawVaccTable(vaccdata) {
   var h3 = document.getElementById("lastVaccSubtitle");
   h3.innerHTML = h3.innerHTML + " " + day+"."+(month+1)+"."+year;
   var filteredPLZData = vaccdata.filter(function(d) { if(d.week_until==untilDate) return d});
-  for(var i=0; i<filteredPLZData.length; i++) {
+  var newPLZArray = [];
+  for(var i=0; i<filteredPLZData.length; i+=3) {
     var singlePLZ = filteredPLZData[i];
     var plz = ""+singlePLZ.plz;
     var tr = document.createElement("tr");
     tr.id = "vaccplz"+plz;
     let population = parseInt(singlePLZ.population); //.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "’");
-    let firstVacc = parseInt(singlePLZ.ncumul_firstvacc);
-    let secondVacc = parseInt(singlePLZ.ncumul_secondvacc);
+    let firstVacc, secondVacc, booster;
+    for(var j=0; j<3; j++) {
+      var line = filteredPLZData[i+j];
+      var status = line.vacc_status;
+      var num = parseInt(line.nCumul);
+      if(status=="atLeastOneDose")
+        firstVacc = num;
+      else if(status=="completedBasicImmu")
+        secondVacc = num;
+      else if(status=="booster")
+        booster = num;
+    }
     let percentFirstVacc = Math.round(firstVacc*1000/population)/10+"%";
     let percentSecondVacc = Math.round(secondVacc*1000/population)/10+"%";
+    let percentBooster = Math.round(booster*1000/population)/10+"%";
     singlePLZ.percentFirstVacc = Math.round(firstVacc*1000/population)/10;
+    singlePLZ.percentSecondVacc = Math.round(secondVacc*1000/population)/10;
+    singlePLZ.percentBooster = Math.round(booster*1000/population)/10;
+    newPLZArray.push(singlePLZ);
     var name = plzNames[plz];
     if(name==undefined) {
       percentFirstVacc = firstVacc;
       percentSecondVacc = secondVacc;
+      percentBooster = booster;
       plz = plz.replace("ZH aber ","");
-      tr.innerHTML = "<td colspan=\"2\">"+plz+"</td><td style=\"text-align:right\">"+percentFirstVacc+"</td><td>"+percentSecondVacc+"</td>";
+      tr.innerHTML = "<td colspan=\"2\">"+plz+"</td><td style=\"text-align:right\">"+percentFirstVacc+"</td><td>"+percentSecondVacc+"</td><td>"+percentBooster+"</td>";
     }
     else
-      tr.innerHTML = "<td>"+plz+"</td><td>"+name+"</td><td>"+percentFirstVacc+"</td><td>"+percentSecondVacc+"</td>";
+      tr.innerHTML = "<td>"+plz+"</td><td>"+name+"</td><td>"+percentFirstVacc+"</td><td>"+percentSecondVacc+"</td><td>"+percentBooster+"</td>";
     //tr.onclick = clickElement;
     tbody.append(tr);
   }
-  drawVacc(filteredPLZData,plzgeojson);
+  drawVacc(newPLZArray,plzgeojson);
 }
 
 function mouseOverHandlerVacc(d, i) {
@@ -1079,10 +1095,12 @@ function mouseOverHandlerVacc(d, i) {
   }
 }
 
-function mouseOutHandlerVacc(d, i) {
-    d3.select(this).attr("fill", getVaccColor());
+function mouseOutHandlerVacc(csvdata) {
+  return function(d, i) {
+    d3.select(this).attr("fill", getVaccColor(csvdata));
     var tr = document.getElementById("vaccplz"+d.properties.PLZ);
     if(tr!=null) tr.className = "";
+  }
 }
 
 function drawVacc(csvdata,topodata, mode) {
@@ -1109,19 +1127,23 @@ function drawVacc(csvdata,topodata, mode) {
         return "svgvacc"+plz;
       })
       .style("stroke", "white")
-      .attr('fill', getVaccColor())
+      .attr('fill', getVaccColor(csvdata))
       .on("mouseover", mouseOverHandlerVacc)
-      .on("mouseout", mouseOutHandlerVacc);
+      .on("mouseout", mouseOutHandlerVacc(csvdata));
 };
 
-function getVaccColor() {
+var vaccMode = 0;
+function getVaccColor(plzdataToUse) {
   return function (d, i) {
       var plz = ""+d.properties.PLZ;
       if(d.properties.Ortschaftsname=="See") return "blue";
-      var filtered = vaccData.filter(function(d) { if(d.plz==plz) return d});
+      var filtered = plzdataToUse.filter(function(d) { if(d.plz==plz) return d});
       if(filtered.length>0) { // &&
-          var cases = filtered[filtered.length-1].percentFirstVacc;
-          if(cases<30) return colors3[10];
+          let cases;
+          if(vaccMode==0) cases = filtered[filtered.length-1].percentFirstVacc;
+          else if(vaccMode==1) cases = filtered[filtered.length-1].percentSecondVacc;
+          else if(vaccMode==2) cases = filtered[filtered.length-1].percentBooster;
+          if(cases<30) return colors4[10];
           else if(cases<35) return colors4[9];
           else if(cases<40) return colors4[8];
           else if(cases<45) return colors4[7];
